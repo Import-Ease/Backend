@@ -2,7 +2,6 @@ package com.example.importease.model;
 
 import jakarta.persistence.*;
 import java.util.List;
-import com.example.importease.model.Product;
 
 @Entity
 @Table(name = "suppliers")

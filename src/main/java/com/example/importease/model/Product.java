@@ -2,7 +2,6 @@ package com.example.importease.model;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
-import com.example.importease.model.Supplier;
 
 @Entity
 @Table(name = "products")
