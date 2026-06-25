@@ -54,7 +54,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // Query database to check if user exists by either email or phone
             AppUser appUser = userRepository.findByEmail(userIdentifier)
-                    .or(() -> userRepository.findByPhoneNumber(userIdentifier))
                     .orElse(null);
 
             if (appUser != null && jwtService.isTokenValid(jwt, org.springframework.security.core.userdetails.User

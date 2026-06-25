@@ -68,9 +68,7 @@ public class AuthController {
         }
 
         boolean isEmail = request.getIdentifier().contains("@");
-        Optional<AppUser> userOpt = isEmail ?
-                appUserRepository.findByEmail(request.getIdentifier()) :
-                appUserRepository.findByPhoneNumber(request.getIdentifier());
+        Optional<AppUser> userOpt = appUserRepository.findByEmail(request.getIdentifier());
 
         AppUser user;
         if (userOpt.isPresent()) {

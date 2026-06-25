@@ -29,7 +29,6 @@ public class UserController {
     @GetMapping("/profile")
     public ResponseEntity<?> getUserProfile(Principal principal) {
         AppUser user = userRepository.findByEmail(principal.getName())
-                .or(() -> userRepository.findByPhoneNumber(principal.getName()))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         return ResponseEntity.ok(user);
@@ -42,7 +41,6 @@ public class UserController {
     @PutMapping("/profile")
     public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> updates, Principal principal) {
         AppUser user = userRepository.findByEmail(principal.getName())
-                .or(() -> userRepository.findByPhoneNumber(principal.getName()))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         // Allow updating optional details
