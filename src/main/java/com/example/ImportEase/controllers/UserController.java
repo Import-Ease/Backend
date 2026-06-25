@@ -2,6 +2,8 @@ package com.example.ImportEase.controllers;
 
 import com.example.ImportEase.models.AppUser;
 import com.example.ImportEase.repositories.AppUserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +13,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
+@Tag(name = "Users", description = "User profile endpoints")
 public class UserController {
 
     private final AppUserRepository userRepository;
@@ -22,6 +25,7 @@ public class UserController {
     /**
      * GET /api/users/profile - Fetch profile details of the logged-in user
      */
+    @Operation(summary = "Get user profile")
     @GetMapping("/profile")
     public ResponseEntity<?> getUserProfile(Principal principal) {
         AppUser user = userRepository.findByEmail(principal.getName())
@@ -34,6 +38,7 @@ public class UserController {
     /**
      * PUT /api/users/profile - Update user profile information
      */
+    @Operation(summary = "Update user profile")
     @PutMapping("/profile")
     public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> updates, Principal principal) {
         AppUser user = userRepository.findByEmail(principal.getName())

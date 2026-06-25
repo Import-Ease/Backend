@@ -4,6 +4,8 @@ import com.example.ImportEase.dtos.ShipmentRequest;
 import com.example.ImportEase.models.Shipment;
 import com.example.ImportEase.services.ShipmentService;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/shipments")
+@Tag(name = "Shipments", description = "Shipment management endpoints")
 public class ShipmentController {
 
     private final ShipmentService shipmentService;
@@ -26,6 +29,7 @@ public class ShipmentController {
     /**
      * POST /api/shipments - Manually create a new shipment
      */
+    @Operation(summary = "Create a shipment")
     @PostMapping
     public ResponseEntity<?> createShipment(@Valid @RequestBody ShipmentRequest request, Principal principal) {
         try {
@@ -39,6 +43,7 @@ public class ShipmentController {
     /**
      * GET /api/shipments - Retrieve all active shipments for logged-in user
      */
+    @Operation(summary = "List active shipments for the authenticated user")
     @GetMapping
     public ResponseEntity<List<Shipment>> getActiveShipments(Principal principal) {
         List<Shipment> shipments = shipmentService.getActiveShipments(principal.getName());
@@ -48,6 +53,7 @@ public class ShipmentController {
     /**
      * GET /api/shipments/{id} - Get specific shipment details
      */
+    @Operation(summary = "Get a shipment by ID")
     @GetMapping("/{id}")
     public ResponseEntity<?> getShipmentById(@PathVariable UUID id, Principal principal) {
         try {
@@ -61,6 +67,7 @@ public class ShipmentController {
     /**
      * PUT /api/shipments/{id} - Update a shipment record
      */
+    @Operation(summary = "Update a shipment")
     @PutMapping("/{id}")
     public ResponseEntity<?> updateShipment(@PathVariable UUID id, @Valid @RequestBody ShipmentRequest request, Principal principal) {
         try {
@@ -74,6 +81,7 @@ public class ShipmentController {
     /**
      * DELETE /api/shipments/{id} - Soft-delete/Archive a shipment
      */
+    @Operation(summary = "Archive a shipment")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> archiveShipment(@PathVariable UUID id, Principal principal) {
         try {

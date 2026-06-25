@@ -6,6 +6,8 @@ import com.example.ImportEase.repositories.AppUserRepository;
 import com.example.ImportEase.services.OtpService;
 import com.example.ImportEase.services.JwtService;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.User;
@@ -19,6 +21,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "Authentication and OTP endpoints")
 public class AuthController {
 
     private final OtpService otpService;
@@ -34,6 +37,7 @@ public class AuthController {
     /**
      * Endpoint to request an OTP via Phone Number
      */
+    @Operation(summary = "Request OTP for phone number")
     @PostMapping("/request-otp")
     public ResponseEntity<?> requestOtp(@RequestParam String phoneNumber) {
         String response = otpService.generateAndSendOtp(phoneNumber);
@@ -43,6 +47,7 @@ public class AuthController {
     /**
      * Endpoint to request an OTP via Email
      */
+    @Operation(summary = "Request OTP for email")
     @PostMapping("/request-email-otp")
     public ResponseEntity<?> requestEmailOtp(@RequestParam String email) {
         String response = otpService.generateAndSendEmailOtp(email);
@@ -52,6 +57,7 @@ public class AuthController {
     /**
      * Endpoint to verify the OTP and log the user in or auto-register them
      */
+    @Operation(summary = "Verify OTP and sign in")
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtpAndLogin(@Valid @RequestBody VerifyOtpRequest request) {
         boolean isValid = otpService.verifyOtp(request.getIdentifier(), request.getOtpCode());
