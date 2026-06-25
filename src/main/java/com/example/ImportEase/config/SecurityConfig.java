@@ -24,8 +24,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // CSRF is disabled because we are using stateless JWTs
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Open the gates for registration and login
-                        .requestMatchers("/error").permitAll()       // NEW LINE: Allows Spring to show you error messages
+                        .requestMatchers("/api/auth/**", "/api/health", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/error").permitAll()
                         .anyRequest().authenticated() // Every other endpoint requires a valid JWT
                 );
 
