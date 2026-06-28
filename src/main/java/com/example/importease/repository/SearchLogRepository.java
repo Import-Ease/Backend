@@ -1,10 +1,24 @@
 package com.example.importease.repository;
 
 import com.example.importease.model.SearchLog;
+import com.example.importease.model.SearchResponseDto;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
 @Repository
 public interface SearchLogRepository extends JpaRepository<SearchLog, Long> {
-    // This instantly gives you database functions like .save(), .findAll(), and .delete() out-of-the-box!
+
+    @Query("SELECT new com.example.importease.model.SearchResponseDto(" +
+            "p.id, p.name, CAST(p.price AS double), " +
+            "p.supplier.name, p.supplier.phone, i.countryOfOrigin, p.imageUrl) " +
+            "FROM Product p " +
+            "LEFT JOIN ImportItem i ON i.product = p " +
+            "WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%'))")
+    List<SearchResponseDto> searchProducts(@Param("query") String query);
+
+    @Query("SELECT p.name FROM Product p WHERE LOWER(p.name) LIKE LOWER(CONCAT(:prefix, '%'))")
+    List<String> findProjectedNamesByPrefix(@Param("prefix") String prefix);
 }
