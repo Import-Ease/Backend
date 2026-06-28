@@ -1,7 +1,7 @@
 package com.example.importease.model;
 
 import jakarta.persistence.*;
-import java.util.List;
+        import java.util.List;
 
 @Entity
 @Table(name = "suppliers")
@@ -19,19 +19,22 @@ public class Supplier {
 
     private String address;
 
+    private String shippingOrigin;
+
+
     @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL)
     private List<Product> products;
 
     // Constructors
     public Supplier() {}
 
-    public Supplier(String name, String email, String phone, String address) {
+    public Supplier(String name, String email, String phone, String address, String shippingOrigin) {
         this.name = name;
         this.email = email;
         this.phone = phone;
         this.address = address;
+        this.shippingOrigin = shippingOrigin;
     }
-
     // Getters and Setters
     public Long getId() { return id; }
 
@@ -46,6 +49,9 @@ public class Supplier {
 
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
+
+    public String getShippingOrigin() { return shippingOrigin; }
+    public void setShippingOrigin(String shippingOrigin) { this.shippingOrigin = shippingOrigin; }
 
     public List<Product> getProducts() { return products; }
     public void setProducts(List<Product> products) { this.products = products; }
