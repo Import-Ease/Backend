@@ -1,8 +1,8 @@
-package com.example.ImportEase.controllers;
+package com.example.ImportEase.controller;
 
-import com.example.ImportEase.dtos.ShipmentRequest;
-import com.example.ImportEase.models.Shipment;
-import com.example.ImportEase.services.ShipmentService;
+import com.example.ImportEase.model.dto.ShipmentRequest;
+import com.example.ImportEase.model.Shipment;
+import com.example.ImportEase.service.ShipmentService;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

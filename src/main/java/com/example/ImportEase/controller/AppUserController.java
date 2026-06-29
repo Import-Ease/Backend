@@ -1,7 +1,7 @@
-package com.example.ImportEase.controllers;
+package com.example.ImportEase.controller;
 
-import com.example.ImportEase.models.AppUser;
-import com.example.ImportEase.repositories.AppUserRepository;
+import com.example.ImportEase.model.AppUser;
+import com.example.ImportEase.repository.AppUserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -14,11 +14,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/users")
 @Tag(name = "Users", description = "User profile endpoints")
-public class UserController {
+public class AppUserController {
 
     private final AppUserRepository userRepository;
 
-    public UserController(AppUserRepository userRepository) {
+    public AppUserController(AppUserRepository userRepository) {
         this.userRepository = userRepository;
     }
 

@@ -1,4 +1,4 @@
-package com.example.ImportEase.dtos;
+package com.example.ImportEase.model.dto;
 
 public class BrevoSmsRequest {
     private String sender;

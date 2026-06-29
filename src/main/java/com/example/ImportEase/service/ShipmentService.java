@@ -1,10 +1,10 @@
-package com.example.ImportEase.services;
+package com.example.ImportEase.service;
 
-import com.example.ImportEase.dtos.ShipmentRequest;
-import com.example.ImportEase.models.AppUser;
-import com.example.ImportEase.models.Shipment;
-import com.example.ImportEase.repositories.AppUserRepository;
-import com.example.ImportEase.repositories.ShipmentRepository;
+import com.example.ImportEase.model.dto.ShipmentRequest;
+import com.example.ImportEase.model.AppUser;
+import com.example.ImportEase.model.Shipment;
+import com.example.ImportEase.repository.AppUserRepository;
+import com.example.ImportEase.repository.ShipmentRepository;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

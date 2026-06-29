@@ -1,6 +1,6 @@
-package com.example.ImportEase.repositories;
+package com.example.ImportEase.repository;
 
-import com.example.ImportEase.models.AppUser;
+import com.example.ImportEase.model.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
