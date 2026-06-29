@@ -12,10 +12,9 @@ import java.util.List;
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query(value = "SELECT p.id, p.name, p.price, " +
-            "s.name, s.phone, i.country_of_origin, p.image_url " +
+            "s.name, s.phone, s.shipping_origin, p.image_url " +
             "FROM products p " +
             "JOIN suppliers s ON p.supplier_id = s.id " +
-            "LEFT JOIN import_item i ON i.product_id = p.id " +
             "WHERE similarity(LOWER(p.name), LOWER(:query)) > 0.3 " +
             "OR similarity(LOWER(p.description), LOWER(:query)) > 0.3",
             nativeQuery = true)
