@@ -51,6 +51,8 @@ public class SupplierController {
                     supplier.setPhone(updatedSupplier.getPhone());
                     supplier.setAddress(updatedSupplier.getAddress());
 
+                    supplier.setShippingOrigin(updatedSupplier.getShippingOrigin());
+
                     return ResponseEntity.ok(supplierRepository.save(supplier));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());

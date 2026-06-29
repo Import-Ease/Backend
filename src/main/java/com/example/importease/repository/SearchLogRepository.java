@@ -13,9 +13,8 @@ public interface SearchLogRepository extends JpaRepository<SearchLog, Long> {
 
     @Query("SELECT new com.example.importease.model.SearchResponseDto(" +
             "p.id, p.name, CAST(p.price AS double), " +
-            "p.supplier.name, p.supplier.phone, i.countryOfOrigin, p.imageUrl) " +
+            "p.supplier.name, p.supplier.phone, p.supplier.shippingOrigin, p.imageUrl) " +
             "FROM Product p " +
-            "LEFT JOIN ImportItem i ON i.product = p " +
             "WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<SearchResponseDto> searchProducts(@Param("query") String query);
 
