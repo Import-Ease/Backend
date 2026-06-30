@@ -24,7 +24,19 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // CSRF is disabled because we are using stateless JWTs
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/health", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/error").permitAll()
+                        // All grouped public endpoints that do not require authentication:
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/api/search/**",
+                                "/api/products/**",
+                                "/api/suppliers/**",
+                                "/api/items/**",
+                                "/api/health",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/error"
+                        ).permitAll()
                         .anyRequest().authenticated() // Every other endpoint requires a valid JWT
                 );
 
