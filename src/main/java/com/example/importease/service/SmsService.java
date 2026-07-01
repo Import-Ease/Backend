@@ -1,7 +1,7 @@
-package com.example.ImportEase.service;
+package com.example.importease.service;
 
-import com.example.ImportEase.model.dto.BrevoSmsRequest;
-import com.example.ImportEase.model.dto.BrevoEmailRequest;
+import com.example.importease.model.dto.BrevoSmsRequest;
+import com.example.importease.model.dto.BrevoEmailRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;

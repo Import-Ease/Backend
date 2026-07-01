@@ -1,10 +1,10 @@
-package com.example.ImportEase;
+package com.example.importease;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ImportEaseApplicationTests {
+class importeaseApplicationTests {
 
 	@Test
 	void contextLoads() {

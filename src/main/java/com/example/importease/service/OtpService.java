@@ -1,4 +1,4 @@
-package com.example.ImportEase.service;
+package com.example.importease.service;
 
 import org.springframework.stereotype.Service;
 import java.util.Map;

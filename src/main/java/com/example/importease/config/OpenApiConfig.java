@@ -1,4 +1,4 @@
-package com.example.ImportEase.config;
+package com.example.importease.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;

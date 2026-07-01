@@ -1,4 +1,4 @@
-package com.example.ImportEase.model;
+package com.example.importease.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

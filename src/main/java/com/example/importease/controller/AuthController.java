@@ -1,10 +1,10 @@
-package com.example.ImportEase.controller;
+package com.example.importease.controller;
 
-import com.example.ImportEase.model.dto.VerifyOtpRequest;
-import com.example.ImportEase.model.AppUser;
-import com.example.ImportEase.repository.AppUserRepository;
-import com.example.ImportEase.service.OtpService;
-import com.example.ImportEase.service.JwtService;
+import com.example.importease.model.dto.VerifyOtpRequest;
+import com.example.importease.model.AppUser;
+import com.example.importease.repository.AppUserRepository;
+import com.example.importease.service.OtpService;
+import com.example.importease.service.JwtService;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

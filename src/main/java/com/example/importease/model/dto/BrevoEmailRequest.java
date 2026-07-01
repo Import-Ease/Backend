@@ -1,4 +1,4 @@
-package com.example.ImportEase.model.dto;
+package com.example.importease.model.dto;
 
 import java.util.List;
 
