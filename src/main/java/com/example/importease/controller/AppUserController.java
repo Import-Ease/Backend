@@ -1,7 +1,7 @@
-package com.example.ImportEase.controller;
+package com.example.importease.controller;
 
-import com.example.ImportEase.model.AppUser;
-import com.example.ImportEase.repository.AppUserRepository;
+import com.example.importease.model.AppUser;
+import com.example.importease.repository.AppUserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;

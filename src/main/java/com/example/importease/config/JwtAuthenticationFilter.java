@@ -1,8 +1,8 @@
-package com.example.ImportEase.config;
+package com.example.importease.config;
 
-import com.example.ImportEase.service.JwtService;
-import com.example.ImportEase.repository.AppUserRepository;
-import com.example.ImportEase.model.AppUser;
+import com.example.importease.service.JwtService;
+import com.example.importease.repository.AppUserRepository;
+import com.example.importease.model.AppUser;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

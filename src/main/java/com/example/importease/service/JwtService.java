@@ -1,4 +1,4 @@
-package com.example.ImportEase.service;
+package com.example.importease.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

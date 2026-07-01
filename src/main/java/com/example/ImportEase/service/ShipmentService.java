@@ -1,14 +1,13 @@
-package com.example.ImportEase.service;
+package com.example.importease.service;
 
-import com.example.ImportEase.model.dto.ShipmentRequest;
-import com.example.ImportEase.model.AppUser;
-import com.example.ImportEase.model.Shipment;
-import com.example.ImportEase.repository.AppUserRepository;
-import com.example.ImportEase.repository.ShipmentRepository;
+import com.example.importease.dto.ShipmentRequest;
+import com.example.importease.model.AppUser;
+import com.example.importease.model.Shipment;
+import com.example.importease.repository.AppUserRepository;
+import com.example.importease.repository.ShipmentRepository;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -23,11 +22,10 @@ public class ShipmentService {
         this.userRepository = userRepository;
     }
 
-
     @Transactional
     public Shipment createShipment(ShipmentRequest request, String userEmail) {
         AppUser user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + userEmail));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + userEmail));
 
         if (shipmentRepository.existsByTrackingId(request.getTrackingId())) {
             throw new IllegalArgumentException("A shipment with this tracking ID already exists.");
@@ -38,6 +36,9 @@ public class ShipmentService {
                 request.getDescription(),
                 request.getGoodsType(),
                 request.getCarrier(),
+                request.getOriginPort(),
+                request.getDestinationPort(),
+                request.getWeightKg(),
                 request.getEstimatedTimeOfArrival(),
                 user
         );
@@ -45,51 +46,59 @@ public class ShipmentService {
         return shipmentRepository.save(shipment);
     }
 
-    /**
-     * Returns all active (unarchived) shipments for a logged-in user
-     */
     public List<Shipment> getActiveShipments(String userEmail) {
         AppUser user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + userEmail));
         return shipmentRepository.findByUser(user).stream()
-                .filter(shipment -> !shipment.isArchived())
+                .filter(s -> !s.isArchived())
                 .toList();
     }
 
-    /**
-     * Returns a specific shipment, verifying ownership for security
-     */
     public Shipment getShipmentById(UUID id, String userEmail) {
         AppUser user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return shipmentRepository.findByIdAndUser(id, user)
-                .orElseThrow(() -> new IllegalArgumentException("Shipment not found or unauthorized access."));
+                .orElseThrow(() -> new IllegalArgumentException("Shipment not found or unauthorized."));
     }
 
-    /**
-     * Updates shipment parameters (such as updating ETA or status)
-     */
     @Transactional
     public Shipment updateShipment(UUID id, ShipmentRequest request, String userEmail) {
         Shipment shipment = getShipmentById(id, userEmail);
-
         shipment.setTrackingId(request.getTrackingId());
         shipment.setDescription(request.getDescription());
         shipment.setGoodsType(request.getGoodsType());
         shipment.setCarrier(request.getCarrier());
+        shipment.setOriginPort(request.getOriginPort());
+        shipment.setDestinationPort(request.getDestinationPort());
+        shipment.setWeightKg(request.getWeightKg());
         shipment.setEstimatedTimeOfArrival(request.getEstimatedTimeOfArrival());
-
         return shipmentRepository.save(shipment);
     }
 
-    /**
-     * Performs a soft delete by archiving the shipment
-     */
     @Transactional
     public void archiveShipment(UUID id, String userEmail) {
         Shipment shipment = getShipmentById(id, userEmail);
         shipment.setArchived(true);
         shipment.setStatus("ARCHIVED");
         shipmentRepository.save(shipment);
+    }
+
+    public Double getTotalLandedCost(String userEmail) {
+        AppUser user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + userEmail));
+        return shipmentRepository.findByUser(user).stream()
+                .filter(s -> !s.isArchived())
+                .mapToDouble(s -> calculateLandedCost(s))
+                .sum();
+    }
+
+    public Double calculateLandedCost(Shipment shipment) {
+        if (shipment.getWeightKg() == null) return 0.0;
+        double weight = shipment.getWeightKg();
+        double shipping = weight * 2.95;
+        double harbour = 200.0;
+        double duties = weight * 0.354;
+        double transport = 150.0;
+        return shipping + harbour + duties + transport;
     }
 }

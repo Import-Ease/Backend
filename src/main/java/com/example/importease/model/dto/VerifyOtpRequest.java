@@ -1,4 +1,4 @@
-package com.example.ImportEase.model.dto;
+package com.example.importease.model.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

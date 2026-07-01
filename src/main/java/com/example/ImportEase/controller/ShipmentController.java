@@ -1,23 +1,20 @@
-package com.example.ImportEase.controller;
+package com.example.importease.controller;
 
-import com.example.ImportEase.model.dto.ShipmentRequest;
-import com.example.ImportEase.model.Shipment;
-import com.example.ImportEase.service.ShipmentService;
+import com.example.importease.dto.ShipmentRequest;
+import com.example.importease.model.Shipment;
+import com.example.importease.service.ShipmentService;
 import jakarta.validation.Valid;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/shipments")
-@Tag(name = "Shipments", description = "Shipment management endpoints")
+@CrossOrigin(origins = "*")
 public class ShipmentController {
 
     private final ShipmentService shipmentService;
@@ -26,69 +23,40 @@ public class ShipmentController {
         this.shipmentService = shipmentService;
     }
 
-    /**
-     * POST /api/shipments - Manually create a new shipment
-     */
-    @Operation(summary = "Create a shipment")
     @PostMapping
-    public ResponseEntity<?> createShipment(@Valid @RequestBody ShipmentRequest request, Principal principal) {
-        try {
-            Shipment shipment = shipmentService.createShipment(request, principal.getName());
-            return ResponseEntity.status(HttpStatus.CREATED).body(shipment);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+    public ResponseEntity<Shipment> createShipment(
+            @Valid @RequestBody ShipmentRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Shipment shipment = shipmentService.createShipment(request, userDetails.getUsername());
+        return ResponseEntity.ok(shipment);
     }
 
-    /**
-     * GET /api/shipments - Retrieve all active shipments for logged-in user
-     */
-    @Operation(summary = "List active shipments for the authenticated user")
     @GetMapping
-    public ResponseEntity<List<Shipment>> getActiveShipments(Principal principal) {
-        List<Shipment> shipments = shipmentService.getActiveShipments(principal.getName());
-        return ResponseEntity.ok(shipments);
+    public ResponseEntity<List<Shipment>> getMyShipments(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(shipmentService.getActiveShipments(userDetails.getUsername()));
     }
 
-    /**
-     * GET /api/shipments/{id} - Get specific shipment details
-     */
-    @Operation(summary = "Get a shipment by ID")
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getShipmentById(@PathVariable UUID id, Principal principal) {
-        try {
-            Shipment shipment = shipmentService.getShipmentById(id, principal.getName());
-            return ResponseEntity.ok(shipment);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
-        }
+    @GetMapping("/total-cost")
+    public ResponseEntity<Map<String, Double>> getTotalLandedCost(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Double total = shipmentService.getTotalLandedCost(userDetails.getUsername());
+        return ResponseEntity.ok(Map.of("totalLandedCost", total));
     }
 
-    /**
-     * PUT /api/shipments/{id} - Update a shipment record
-     */
-    @Operation(summary = "Update a shipment")
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateShipment(@PathVariable UUID id, @Valid @RequestBody ShipmentRequest request, Principal principal) {
-        try {
-            Shipment updatedShipment = shipmentService.updateShipment(id, request, principal.getName());
-            return ResponseEntity.ok(updatedShipment);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+    public ResponseEntity<Shipment> updateShipment(
+            @PathVariable UUID id,
+            @Valid @RequestBody ShipmentRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(shipmentService.updateShipment(id, request, userDetails.getUsername()));
     }
 
-    /**
-     * DELETE /api/shipments/{id} - Soft-delete/Archive a shipment
-     */
-    @Operation(summary = "Archive a shipment")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> archiveShipment(@PathVariable UUID id, Principal principal) {
-        try {
-            shipmentService.archiveShipment(id, principal.getName());
-            return ResponseEntity.ok(Map.of("message", "Shipment archived successfully."));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
-        }
+    @PatchMapping("/{id}/archive")
+    public ResponseEntity<Void> archiveShipment(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        shipmentService.archiveShipment(id, userDetails.getUsername());
+        return ResponseEntity.noContent().build();
     }
 }

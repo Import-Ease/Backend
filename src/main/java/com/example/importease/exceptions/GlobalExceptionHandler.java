@@ -1,4 +1,4 @@
-package com.example.ImportEase.exceptions;
+package com.example.importease.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
