@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.List;
 
 @Entity
 @Table(name = "shipments")
@@ -50,6 +51,12 @@ public class Shipment {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ShipmentStage> stages = new java.util.ArrayList<>();
+
+    public List<ShipmentStage> getStages() { return stages; }
+    public void setStages(List<ShipmentStage> stages) { this.stages = stages; }
 
     public Shipment() {}
 
