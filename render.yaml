@@ -7,13 +7,13 @@ services:
     region: oregon
     autoDeploy: true
     envVars:
-      - key: JDBC_DATABASE_URL
-        value: jdbc:postgresql://ep-green-surf-ah1xy2w1-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+      - key: DB_URL
+        value: jdbc:postgresql://ep-orange-credit-ai8r6tum.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require
       - key: DB_USERNAME
         value: neondb_owner
       - key: DB_PASSWORD
-        value: npg_2zJsv7nrimfT
-      - key: JPA_DDL_AUTO
-        value: none
+        value: npg_hn32EHNbTvwG
+      - key: BREVO_API_KEY
+        value: HER_REAL_BREVO_KEY_HERE
       - key: PORT
-        value: 5000
+        value: 8080
