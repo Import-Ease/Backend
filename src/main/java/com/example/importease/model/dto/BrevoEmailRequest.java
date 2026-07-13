@@ -1,12 +1,15 @@
 package com.example.importease.model.dto;
 
 import java.util.List;
+import java.util.Map;
 
 public class BrevoEmailRequest {
     private Sender sender;
     private List<Recipient> to;
     private String subject;
     private String htmlContent;
+    private String textContent;
+    private Map<String, Object> params;
 
     public BrevoEmailRequest(Sender sender, List<Recipient> to, String subject, String htmlContent) {
         this.sender = sender;
@@ -20,6 +23,10 @@ public class BrevoEmailRequest {
     public List<Recipient> getTo() { return to; }
     public String getSubject() { return subject; }
     public String getHtmlContent() { return htmlContent; }
+    public String getTextContent() { return textContent; }
+    public void setTextContent(String textContent) { this.textContent = textContent; }
+    public Map<String, Object> getParams() { return params; }
+    public void setParams(Map<String, Object> params) { this.params = params; }
 
     // Nested Helper Class for Sender object
     public static class Sender {

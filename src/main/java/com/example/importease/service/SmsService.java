@@ -9,6 +9,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 @Service
@@ -32,6 +33,11 @@ public class SmsService {
 
     // === METHOD 1: SEND OTP VIA SMS ===
     public void sendOtpSms(String phoneNumber, String otpCode) {
+        if (apiKey == null || apiKey.isBlank()) {
+            System.err.println("Brevo SMS skipped: missing api key.");
+            return;
+        }
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("accept", "application/json");
@@ -44,7 +50,10 @@ public class SmsService {
         HttpEntity<BrevoSmsRequest> requestEntity = new HttpEntity<>(requestPayload, headers);
 
         try {
-            restTemplate.exchange(BREVO_SMS_URL, HttpMethod.POST, requestEntity, String.class);
+            ResponseEntity<String> response = restTemplate.exchange(BREVO_SMS_URL, HttpMethod.POST, requestEntity, String.class);
+            System.out.println("Brevo SMS response: " + response.getStatusCode() + " " + response.getBody());
+        } catch (HttpClientErrorException e) {
+            System.err.println("Brevo SMS rejected the request: " + e.getStatusCode() + " " + e.getResponseBodyAsString());
         } catch (Exception e) {
             System.err.println("Failed to send SMS: " + e.getMessage());
         }
@@ -52,7 +61,11 @@ public class SmsService {
 
     // === METHOD 2: SEND OTP VIA EMAIL ===
     public void sendOtpEmail(String recipientEmail, String otpCode) {
-        // Here are the lines you asked about! They config the request for Brevo's email API
+        if (apiKey == null || apiKey.isBlank()) {
+            System.err.println("Brevo Email skipped: missing api key.");
+            return;
+        }
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("accept", "application/json");
@@ -64,6 +77,7 @@ public class SmsService {
                 + "<h1 style='color: #4F46E5; letter-spacing: 2px;'>" + otpCode + "</h1>"
                 + "<p>This code is valid for 10 minutes. Please do not share it with anyone.</p>"
                 + "</body></html>";
+        String textBody = "Your ImportEase verification code is " + otpCode + ". This code is valid for 10 minutes.";
 
         BrevoEmailRequest.Sender senderObj = new BrevoEmailRequest.Sender(emailSenderName, emailSenderEmail);
         BrevoEmailRequest.Recipient recipientObj = new BrevoEmailRequest.Recipient(recipientEmail, "ImportEase User");
@@ -74,12 +88,16 @@ public class SmsService {
                 "Your ImportEase Login Code",
                 htmlBody
         );
+        emailPayload.setTextContent(textBody);
+        emailPayload.setParams(java.util.Map.of("otp", otpCode));
 
         HttpEntity<BrevoEmailRequest> requestEntity = new HttpEntity<>(emailPayload, headers);
 
         try {
             ResponseEntity<String> response = restTemplate.exchange(BREVO_EMAIL_URL, HttpMethod.POST, requestEntity, String.class);
-            System.out.println("Brevo Email Response: " + response.getBody());
+            System.out.println("Brevo Email Response: " + response.getStatusCode() + " " + response.getBody());
+        } catch (HttpClientErrorException e) {
+            System.err.println("Brevo Email rejected the request: " + e.getStatusCode() + " " + e.getResponseBodyAsString());
         } catch (Exception e) {
             System.err.println("Failed to send verification email: " + e.getMessage());
         }

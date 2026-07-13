@@ -20,4 +20,6 @@ public interface SearchLogRepository extends JpaRepository<SearchLog, Long> {
 
     @Query("SELECT p.name FROM Product p WHERE LOWER(p.name) LIKE LOWER(CONCAT(:prefix, '%'))")
     List<String> findProjectedNamesByPrefix(@Param("prefix") String prefix);
+
+    List<SearchLog> findTop10ByOrderByTimestampDesc();
 }
