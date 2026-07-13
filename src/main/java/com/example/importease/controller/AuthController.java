@@ -5,6 +5,12 @@ import com.example.importease.model.AppUser;
 import com.example.importease.repository.AppUserRepository;
 import com.example.importease.service.OtpService;
 import com.example.importease.service.JwtService;
+import com.example.importease.dto.SetCredentialsRequest;
+import com.example.importease.dto.LoginRequest;
+import com.example.importease.dto.RegisterRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,6 +33,9 @@ public class AuthController {
     private final OtpService otpService;
     private final JwtService jwtService;
     private final AppUserRepository appUserRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public AuthController(OtpService otpService, JwtService jwtService, AppUserRepository appUserRepository) {
         this.otpService = otpService;
@@ -99,6 +108,108 @@ public class AuthController {
                 "message", "Verification successful!",
                 "accessToken", token,
                 "identifier", request.getIdentifier(),
+                "role", user.getRole(),
+                "userId", user.getId()
+        ));
+    }
+
+    /**
+     * Called AFTER successful OTP verification, to let user set username+password
+     */
+    @Operation(summary = "Set username and password after OTP verification")
+    @PostMapping("/set-credentials")
+    public ResponseEntity<?> setCredentials(@Valid @RequestBody SetCredentialsRequest request) {
+        Optional<AppUser> userOpt = appUserRepository.findByEmail(request.getIdentifier());
+
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No verified account found for this identifier. Please verify OTP first."));
+        }
+
+        if (appUserRepository.existsByUsername(request.getUsername())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Username already taken."));
+        }
+
+        AppUser user = userOpt.get();
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPasswordSet(true);
+        appUserRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("message", "Username and password set successfully! You can now log in with either method."));
+    }
+
+    /**
+     * Traditional username + password login
+     */
+    @Operation(summary = "Register a new account")
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+        if (appUserRepository.findByUsername(request.getUsername()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Username already taken."));
+        }
+
+        if (request.getEmail() != null && appUserRepository.findByEmail(request.getEmail()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Email already registered."));
+        }
+
+        AppUser user = new AppUser();
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(request.getRole() != null ? request.getRole() : "IMPORTER");
+        user.setPasswordSet(true);
+        user.setCreatedAt(LocalDateTime.now());
+        user = appUserRepository.save(user);
+
+        UserDetails userDetails = User.withUsername(user.getUsername())
+                .password(user.getPassword())
+                .authorities(user.getRole())
+                .build();
+
+        String token = jwtService.generateToken(userDetails);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                "message", "Registration successful!",
+                "accessToken", token,
+                "username", user.getUsername(),
+                "role", user.getRole(),
+                "userId", user.getId()
+        ));
+    }
+
+    @Operation(summary = "Login with username and password")
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        Optional<AppUser> userOpt = appUserRepository.findByUsername(request.getUsername());
+
+        if (userOpt.isEmpty() || !userOpt.get().isPasswordSet()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid username or password."));
+        }
+
+        AppUser user = userOpt.get();
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid username or password."));
+        }
+
+        UserDetails userDetails = User.withUsername(
+                        user.getEmail() != null ? user.getEmail() : user.getPhoneNumber())
+                .password(user.getPassword())
+                .authorities(user.getRole())
+                .build();
+
+        String token = jwtService.generateToken(userDetails);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Login successful!",
+                "accessToken", token,
+                "username", user.getUsername(),
                 "role", user.getRole(),
                 "userId", user.getId()
         ));

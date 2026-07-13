@@ -34,4 +34,9 @@ public class SearchController {
         List<String> suggestions = productRepository.findTop5NamesByPrefix(prefix);
         return ResponseEntity.ok(suggestions);
     }
+
+    @GetMapping("/history")
+    public ResponseEntity<List<String>> getHistory() {
+        return ResponseEntity.ok(searchLogService.getRecentSearches());
+    }
 }

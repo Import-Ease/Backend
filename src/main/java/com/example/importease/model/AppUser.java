@@ -34,6 +34,18 @@ public class AppUser {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(unique = true)
+    private String username;
+
+    @Column(name = "password_set", nullable = false)
+    private boolean passwordSet = false;
+
+    // Getters and setters
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public boolean isPasswordSet() { return passwordSet; }
+    public void setPasswordSet(boolean passwordSet) { this.passwordSet = passwordSet; }
+
     public AppUser() {}
 
     public AppUser(String email, String phoneNumber, String password, String role) {

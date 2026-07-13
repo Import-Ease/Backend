@@ -1,7 +1,6 @@
 package com.example.importease.service;
 
 import com.example.importease.model.SearchLog;
-import com.example.importease.model.SearchResponseDto;
 import com.example.importease.repository.SearchLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -25,6 +24,12 @@ public class SearchLogService {
             messagingTemplate.convertAndSend("/topic/search-alerts",
                     "Live Alert: Someone searched for " + cleanQuery);
         }
+    }
+
+    public List<String> getRecentSearches() {
+        return searchLogRepository.findTop10ByOrderByTimestampDesc().stream()
+                .map(SearchLog::getSearchQuery)
+                .toList();
     }
 
     // Autocomplete suggestions
