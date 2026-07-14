@@ -181,10 +181,13 @@ public class AuthController {
         ));
     }
 
-    @Operation(summary = "Login with username and password")
+    @Operation(summary = "Login with username or email and password")
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        Optional<AppUser> userOpt = appUserRepository.findByUsername(request.getUsername());
+        String identifier = request.getUsername().trim();
+
+        // Try to find user by username OR email (case-insensitive)
+        Optional<AppUser> userOpt = appUserRepository.findByUsernameOrEmail(identifier);
 
         if (userOpt.isEmpty() || !userOpt.get().isPasswordSet()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -198,8 +201,9 @@ public class AuthController {
                     .body(Map.of("error", "Invalid username or password."));
         }
 
-        UserDetails userDetails = User.withUsername(
-                        user.getEmail() != null ? user.getEmail() : user.getPhoneNumber())
+        // Use email as JWT subject (consistent with JWT filter lookup)
+        String jwtSubject = user.getEmail() != null ? user.getEmail() : user.getUsername();
+        UserDetails userDetails = User.withUsername(jwtSubject)
                 .password(user.getPassword())
                 .authorities(user.getRole())
                 .build();
