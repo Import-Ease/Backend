@@ -52,32 +52,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 3. Process authentication if user identifier exists and security context is unauthenticated
         if (userIdentifier != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            // Query database to check if user exists by either email or phone
-            AppUser appUser = userRepository.findByEmail(userIdentifier)
+            // Query database to check if user exists by email OR username (case-insensitive)
+            AppUser appUser = userRepository.findByUsernameOrEmail(userIdentifier)
                     .orElse(null);
 
-            if (appUser != null && jwtService.isTokenValid(jwt, org.springframework.security.core.userdetails.User
-                    .withUsername(appUser.getEmail() != null ? appUser.getEmail() : appUser.getPhoneNumber())
-                    .password("")
-                    .authorities(appUser.getRole())
-                    .build())) {
+            if (appUser != null) {
+                String jwtSubject = appUser.getEmail() != null ? appUser.getEmail() : appUser.getUsername();
+                if (jwtService.isTokenValid(jwt, org.springframework.security.core.userdetails.User
+                        .withUsername(jwtSubject)
+                        .password("")
+                        .authorities(appUser.getRole())
+                        .build())) {
 
-                // Create Spring UserDetails with designated database roles
-                UserDetails userDetails = User.withUsername(userIdentifier)
-                        .password("") // OTP flow is passwordless
-                        .authorities(appUser.getRole()) // e.g., "IMPORTER"
-                        .build();
+                    // Create Spring UserDetails with designated database roles
+                    UserDetails userDetails = User.withUsername(userIdentifier)
+                            .password("")
+                            .authorities(appUser.getRole())
+                            .build();
 
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
 
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // Set authenticated authentication context inside Spring Security Context Holder
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
         }
 
