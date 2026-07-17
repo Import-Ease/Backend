@@ -1,12 +1,18 @@
 package com.example.importease.controller;
 
+import com.example.importease.model.AppUser;
 import com.example.importease.model.Supplier;
+import com.example.importease.repository.AppUserRepository;
 import com.example.importease.repository.SupplierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -16,6 +22,9 @@ public class SupplierController {
 
     @Autowired
     private SupplierRepository supplierRepository;
+
+    @Autowired
+    private AppUserRepository appUserRepository;
 
     // GET all suppliers
     @GetMapping
@@ -32,13 +41,89 @@ public class SupplierController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // POST add supplier
+    // GET the logged-in supplier's own profile
+    @GetMapping("/me")
+    public ResponseEntity<?> getMySupplier(@AuthenticationPrincipal UserDetails userDetails) {
+        AppUser currentUser = appUserRepository.findByEmail(userDetails.getUsername())
+                .orElse(null);
+
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "User not found."));
+        }
+
+        Optional<Supplier> supplierOpt = supplierRepository.findByOwnerId(currentUser.getId());
+
+        if (supplierOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No supplier profile found. Please create one first."));
+        }
+
+        return ResponseEntity.ok(supplierOpt.get());
+    }
+
+    // POST create the logged-in supplier's own profile
+    @PostMapping("/me")
+    public ResponseEntity<?> createMySupplier(
+            @RequestBody Supplier supplier,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        AppUser currentUser = appUserRepository.findByEmail(userDetails.getUsername())
+                .orElse(null);
+
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "User not found."));
+        }
+
+        if (supplierRepository.findByOwnerId(currentUser.getId()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "You already have a supplier profile."));
+        }
+
+        supplier.setOwnerId(currentUser.getId());
+        Supplier saved = supplierRepository.save(supplier);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    // PUT update the logged-in supplier's own profile
+    @PutMapping("/me")
+    public ResponseEntity<?> updateMySupplier(
+            @RequestBody Supplier updatedSupplier,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        AppUser currentUser = appUserRepository.findByEmail(userDetails.getUsername())
+                .orElse(null);
+
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "User not found."));
+        }
+
+        Optional<Supplier> supplierOpt = supplierRepository.findByOwnerId(currentUser.getId());
+
+        if (supplierOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No supplier profile found."));
+        }
+
+        Supplier supplier = supplierOpt.get();
+        supplier.setName(updatedSupplier.getName());
+        supplier.setEmail(updatedSupplier.getEmail());
+        supplier.setPhone(updatedSupplier.getPhone());
+        supplier.setAddress(updatedSupplier.getAddress());
+        supplier.setShippingOrigin(updatedSupplier.getShippingOrigin());
+
+        return ResponseEntity.ok(supplierRepository.save(supplier));
+    }
+
+    // POST add supplier (legacy/admin direct add - kept for backward compatibility)
     @PostMapping
     public Supplier addSupplier(@RequestBody Supplier supplier) {
         return supplierRepository.save(supplier);
     }
 
-    // PUT update supplier
+    // PUT update supplier by id (legacy/admin direct update)
     @PutMapping("/{id}")
     public ResponseEntity<Supplier> updateSupplier(
             @PathVariable Long id,
@@ -50,7 +135,6 @@ public class SupplierController {
                     supplier.setEmail(updatedSupplier.getEmail());
                     supplier.setPhone(updatedSupplier.getPhone());
                     supplier.setAddress(updatedSupplier.getAddress());
-
                     supplier.setShippingOrigin(updatedSupplier.getShippingOrigin());
 
                     return ResponseEntity.ok(supplierRepository.save(supplier));

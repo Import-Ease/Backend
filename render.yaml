@@ -17,3 +17,5 @@ services:
         value: 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
       - key: PORT
         value: 8080
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
