@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.importease.model.ShipmentStage;
 import com.example.importease.repository.ShipmentStageRepository;
+import com.example.importease.model.dto.AdminShipmentSummary;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,7 +22,6 @@ public class ShipmentService {
 
     private final ShipmentStageRepository shipmentStageRepository;
 
-    // Update constructor to include it:
     public ShipmentService(ShipmentRepository shipmentRepository, AppUserRepository userRepository,
                            ShipmentStageRepository shipmentStageRepository) {
         this.shipmentRepository = shipmentRepository;
@@ -29,6 +29,12 @@ public class ShipmentService {
         this.shipmentStageRepository = shipmentStageRepository;
     }
 
+    // Admin: get ALL shipments across all users
+    public List<AdminShipmentSummary> getAllShipments() {
+        return shipmentRepository.findAll().stream()
+                .map(AdminShipmentSummary::new)
+                .toList();
+    }
     // Admin manually advances a shipment to a new stage
     @Transactional
     public Shipment advanceStage(UUID shipmentId, String stageName, String note) {
@@ -48,7 +54,7 @@ public class ShipmentService {
         return shipmentStageRepository.findByShipmentOrderByReachedAtAsc(shipment);
     }
 
-        @Transactional
+    @Transactional
     public Shipment createShipment(ShipmentRequest request, String userEmail) {
         AppUser user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + userEmail));

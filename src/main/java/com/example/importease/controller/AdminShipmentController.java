@@ -5,6 +5,7 @@ import com.example.importease.model.ShipmentStage;
 import com.example.importease.service.ShipmentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.example.importease.model.dto.AdminShipmentSummary;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,12 @@ public class AdminShipmentController {
 
     public AdminShipmentController(ShipmentService shipmentService) {
         this.shipmentService = shipmentService;
+    }
+
+    // GET /api/admin/shipments - list ALL shipments across all users
+    @GetMapping
+    public ResponseEntity<List<AdminShipmentSummary>> getAllShipments() {
+        return ResponseEntity.ok(shipmentService.getAllShipments());
     }
 
     // POST /api/admin/shipments/{id}/advance-stage
