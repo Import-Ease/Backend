@@ -3,7 +3,9 @@ package com.example.importease.controller;
 import com.example.importease.model.AppUser;
 import com.example.importease.model.Supplier;
 import com.example.importease.repository.AppUserRepository;
+import com.example.importease.repository.ProductRepository;
 import com.example.importease.repository.SupplierRepository;
+import com.example.importease.service.PaystackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,6 +28,12 @@ public class SupplierController {
 
     @Autowired
     private AppUserRepository appUserRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private PaystackService paystackService;
 
     // GET all suppliers
     @GetMapping
@@ -115,6 +124,76 @@ public class SupplierController {
         supplier.setShippingOrigin(updatedSupplier.getShippingOrigin());
 
         return ResponseEntity.ok(supplierRepository.save(supplier));
+    }
+
+    // GET product count + tier for the logged-in supplier
+    @GetMapping("/me/product-count")
+    public ResponseEntity<?> getMyProductCount(@AuthenticationPrincipal UserDetails userDetails) {
+        AppUser currentUser = appUserRepository.findByEmail(userDetails.getUsername())
+                .orElse(null);
+
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "User not found."));
+        }
+
+        Optional<Supplier> supplierOpt = supplierRepository.findByOwnerId(currentUser.getId());
+
+        if (supplierOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No supplier profile found."));
+        }
+
+        Supplier supplier = supplierOpt.get();
+        long count = productRepository.findAll().stream()
+                .filter(p -> p.getSupplier() != null && p.getSupplier().getId().equals(supplier.getId()))
+                .count();
+
+        return ResponseEntity.ok(Map.of(
+                "productCount", count,
+                "subscriptionTier", supplier.getSubscriptionTier(),
+                "paidUntil", supplier.getPaidUntil() != null ? supplier.getPaidUntil().toString() : null
+        ));
+    }
+
+    // POST upgrade to PAID tier — initializes a $4 USD Paystack payment
+    @PostMapping("/me/upgrade")
+    public ResponseEntity<?> upgradeToPaid(@AuthenticationPrincipal UserDetails userDetails) {
+        AppUser currentUser = appUserRepository.findByEmail(userDetails.getUsername())
+                .orElse(null);
+
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "User not found."));
+        }
+
+        Optional<Supplier> supplierOpt = supplierRepository.findByOwnerId(currentUser.getId());
+
+        if (supplierOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No supplier profile found. Please create one first."));
+        }
+
+        Supplier supplier = supplierOpt.get();
+
+        if ("PAID".equals(supplier.getSubscriptionTier())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "You are already on the PAID tier."));
+        }
+
+        try {
+            Map<String, Object> result = paystackService.initializePayment(
+                    currentUser.getEmail(),
+                    supplier.getName(),
+                    new BigDecimal("4.00"),
+                    "USD",
+                    "SUBSCRIPTION",
+                    supplier.getId()
+            );
+            return ResponseEntity.ok(result);
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
     }
 
     // POST add supplier (legacy/admin direct add - kept for backward compatibility)

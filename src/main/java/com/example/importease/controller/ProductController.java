@@ -84,6 +84,16 @@ public class ProductController {
                     .body(Map.of("error", "No supplier profile found. Please create one first via POST /api/suppliers/me."));
         }
 
+        if ("FREE".equals(supplier.getSubscriptionTier())) {
+            long existingCount = productRepository.findAll().stream()
+                    .filter(p -> p.getSupplier() != null && p.getSupplier().getId().equals(supplier.getId()))
+                    .count();
+            if (existingCount >= 5) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "Free tier limited to 5 products. Upgrade to add more."));
+            }
+        }
+
         product.setSupplier(supplier);
         Product saved = productRepository.save(product);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
