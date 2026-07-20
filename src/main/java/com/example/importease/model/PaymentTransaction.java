@@ -38,6 +38,12 @@ public class PaymentTransaction {
     @Column
     private String paystackResponse;
 
+    @Column(name = "commission_amount")
+    private BigDecimal commissionAmount;
+
+    @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'STANDARD'")
+    private String paymentType = "STANDARD";
+
     public PaymentTransaction() {}
 
     public PaymentTransaction(String reference, String payerEmail, String supplierName, BigDecimal amount, String currency) {
@@ -65,4 +71,10 @@ public class PaymentTransaction {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public String getPaystackResponse() { return paystackResponse; }
     public void setPaystackResponse(String paystackResponse) { this.paystackResponse = paystackResponse; }
+
+    public BigDecimal getCommissionAmount() { return commissionAmount; }
+    public void setCommissionAmount(BigDecimal commissionAmount) { this.commissionAmount = commissionAmount; }
+
+    public String getPaymentType() { return paymentType; }
+    public void setPaymentType(String paymentType) { this.paymentType = paymentType; }
 }

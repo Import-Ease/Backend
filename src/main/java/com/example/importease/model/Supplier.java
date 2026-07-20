@@ -1,6 +1,7 @@
 package com.example.importease.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,6 +28,12 @@ public class Supplier {
 
     @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL)
     private List<Product> products;
+
+    @Column(nullable = false, columnDefinition = "VARCHAR(255) DEFAULT 'FREE'")
+    private String subscriptionTier = "FREE";
+
+    @Column(name = "paid_until")
+    private LocalDateTime paidUntil;
 
     // Constructors
     public Supplier() {}
@@ -62,4 +69,10 @@ public class Supplier {
 
     public List<Product> getProducts() { return products; }
     public void setProducts(List<Product> products) { this.products = products; }
+
+    public String getSubscriptionTier() { return subscriptionTier; }
+    public void setSubscriptionTier(String subscriptionTier) { this.subscriptionTier = subscriptionTier; }
+
+    public LocalDateTime getPaidUntil() { return paidUntil; }
+    public void setPaidUntil(LocalDateTime paidUntil) { this.paidUntil = paidUntil; }
 }
