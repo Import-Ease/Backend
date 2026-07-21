@@ -45,6 +45,15 @@ public class Shipment {
     @Column(name = "archived")
     private boolean archived = false;
 
+    @Column(name = "product_id")
+    private Long productId;
+
+    @Column(name = "shipping_mode")
+    private String shippingMode;
+
+    @Column(name = "order_quantity")
+    private Integer orderQuantity;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private AppUser user;
@@ -101,6 +110,12 @@ public class Shipment {
     public void setArchived(boolean archived) { this.archived = archived; }
     public AppUser getUser() { return user; }
     public void setUser(AppUser user) { this.user = user; }
+    public Long getProductId() { return productId; }
+    public void setProductId(Long productId) { this.productId = productId; }
+    public String getShippingMode() { return shippingMode; }
+    public void setShippingMode(String shippingMode) { this.shippingMode = shippingMode; }
+    public Integer getOrderQuantity() { return orderQuantity; }
+    public void setOrderQuantity(Integer orderQuantity) { this.orderQuantity = orderQuantity; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
