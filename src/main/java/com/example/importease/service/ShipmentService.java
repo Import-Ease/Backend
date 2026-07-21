@@ -1,5 +1,6 @@
 package com.example.importease.service;
 
+import com.example.importease.dto.OrderRequest;
 import com.example.importease.dto.ShipmentRequest;
 import com.example.importease.model.AppUser;
 import com.example.importease.model.Shipment;
@@ -13,6 +14,7 @@ import com.example.importease.repository.ShipmentStageRepository;
 import com.example.importease.model.dto.AdminShipmentSummary;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 public class ShipmentService {
@@ -76,6 +78,41 @@ public class ShipmentService {
         );
 
         return shipmentRepository.save(shipment);
+    }
+
+    @Transactional
+    public Shipment createOrder(OrderRequest request, String userEmail) {
+        AppUser user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + userEmail));
+
+        String trackingId = generateOrderTrackingId();
+
+        Shipment shipment = new Shipment();
+        shipment.setTrackingId(trackingId);
+        shipment.setDescription("Order for product #" + request.getProductId());
+        shipment.setGoodsType(request.getShippingMode());
+        shipment.setCarrier("PENDING");
+        shipment.setOriginPort("PENDING");
+        shipment.setDestinationPort(request.getDestination());
+        shipment.setWeightKg(null);
+        shipment.setEstimatedTimeOfArrival(null);
+        shipment.setStatus("PENDING_PAYMENT");
+        shipment.setArchived(false);
+        shipment.setUser(user);
+        shipment.setProductId(request.getProductId());
+        shipment.setShippingMode(request.getShippingMode());
+        shipment.setOrderQuantity(request.getQuantity());
+
+        return shipmentRepository.save(shipment);
+    }
+
+    private String generateOrderTrackingId() {
+        String trackingId;
+        do {
+            long num = ThreadLocalRandom.current().nextLong(100000, 999999);
+            trackingId = "ORD-" + num;
+        } while (shipmentRepository.existsByTrackingId(trackingId));
+        return trackingId;
     }
 
     public List<Shipment> getActiveShipments(String userEmail) {
