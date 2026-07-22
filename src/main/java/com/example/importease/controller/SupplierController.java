@@ -145,9 +145,7 @@ public class SupplierController {
         }
 
         Supplier supplier = supplierOpt.get();
-        long count = productRepository.findAll().stream()
-                .filter(p -> p.getSupplier() != null && p.getSupplier().getId().equals(supplier.getId()))
-                .count();
+        long count = productRepository.countBySupplierId(supplier.getId());
 
         return ResponseEntity.ok(Map.of(
                 "productCount", count,

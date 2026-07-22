@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface SearchLogRepository extends JpaRepository<SearchLog, Long> {
@@ -22,4 +24,10 @@ public interface SearchLogRepository extends JpaRepository<SearchLog, Long> {
     List<String> findProjectedNamesByPrefix(@Param("prefix") String prefix);
 
     List<SearchLog> findTop10ByOrderByTimestampDesc();
+
+    List<SearchLog> findByUserIdOrderByTimestampDesc(UUID userId);
+
+    Optional<SearchLog> findByUserIdAndSearchQueryIgnoreCase(UUID userId, String searchQuery);
+
+    void deleteByUserId(UUID userId);
 }

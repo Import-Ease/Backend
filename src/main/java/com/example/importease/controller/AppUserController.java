@@ -1,8 +1,11 @@
 package com.example.importease.controller;
 
 import com.example.importease.model.AppUser;
+import com.example.importease.model.Supplier;
 import com.example.importease.repository.AppUserRepository;
 import com.example.importease.repository.ShipmentRepository;
+import com.example.importease.repository.SupplierRepository;
+import com.example.importease.service.CloudinaryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,13 +25,18 @@ public class AppUserController {
 
     private final AppUserRepository userRepository;
     private final ShipmentRepository shipmentRepository;
+    private final SupplierRepository supplierRepository;
+    private final CloudinaryService cloudinaryService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public AppUserController(AppUserRepository userRepository, ShipmentRepository shipmentRepository) {
+    public AppUserController(AppUserRepository userRepository, ShipmentRepository shipmentRepository,
+                             SupplierRepository supplierRepository, CloudinaryService cloudinaryService) {
         this.userRepository = userRepository;
         this.shipmentRepository = shipmentRepository;
+        this.supplierRepository = supplierRepository;
+        this.cloudinaryService = cloudinaryService;
     }
 
     /**
@@ -84,12 +92,20 @@ public class AppUserController {
                     .body(Map.of("error", "Incorrect password. Account not deleted."));
         }
 
+        // Clean up Cloudinary images if this user is a supplier
+        supplierRepository.findByOwnerId(user.getId()).ifPresent(supplier -> {
+            if (supplier.getProducts() != null) {
+                for (com.example.importease.model.Product product : supplier.getProducts()) {
+                    String publicId = cloudinaryService.extractPublicId(product.getImageUrl());
+                    if (publicId != null) {
+                        cloudinaryService.deleteImage(publicId);
+                    }
+                }
+            }
+        });
+
         // Delete the user's shipments first to avoid foreign key constraint errors
         shipmentRepository.findByUser(user).forEach(shipmentRepository::delete);
-
-        // Note: if this user is a Supplier, their Supplier profile and products
-        // will remain in the database but become "orphaned" (ownerId no longer matches any user).
-        // This is acceptable for now since Supplier.ownerId has no enforced foreign key constraint.
 
         userRepository.delete(user);
 

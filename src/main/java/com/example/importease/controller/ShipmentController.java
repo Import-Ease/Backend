@@ -58,6 +58,11 @@ public class ShipmentController {
             @PathVariable UUID id,
             @Valid @RequestBody ShipmentRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
+        if (!isAdmin) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(shipmentService.updateShipment(id, request, userDetails.getUsername()));
     }
 
@@ -65,6 +70,11 @@ public class ShipmentController {
     public ResponseEntity<Void> archiveShipment(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails userDetails) {
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
+        if (!isAdmin) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+        }
         shipmentService.archiveShipment(id, userDetails.getUsername());
         return ResponseEntity.noContent().build();
     }
