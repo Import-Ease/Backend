@@ -1,5 +1,6 @@
 package com.example.importease.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,6 +27,7 @@ public class Supplier {
     @Column(name = "owner_id")
     private UUID ownerId;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL)
     private List<Product> products;
 
