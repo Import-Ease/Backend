@@ -16,6 +16,7 @@ import com.example.importease.model.ShipmentStage;
 import com.example.importease.model.ShipmentStatus;
 import com.example.importease.repository.ShipmentStageRepository;
 import com.example.importease.model.ShipmentEventLog;
+import com.example.importease.dto.ShipmentResponse;
 import com.example.importease.model.dto.AdminShipmentSummary;
 import java.util.List;
 import java.util.Map;
@@ -50,14 +51,15 @@ public class ShipmentService {
                 .toList();
     }
     // Admin: get shipment by id (no owner guard)
-    public Optional<Shipment> getShipmentByIdAdmin(UUID id) {
-        return shipmentRepository.findById(id);
+    public Optional<ShipmentResponse> getShipmentByIdAdmin(UUID id) {
+        return shipmentRepository.findByIdWithUser(id)
+                .map(ShipmentResponse::fromEntityWithUser);
     }
 
     // Admin: update shipment fields map (tracking, description, carrier, etc. + paySupplier)
     @Transactional
-    public Shipment adminUpdateShipment(UUID id, Map<String, Object> fields, String adminEmail) {
-        Shipment shipment = shipmentRepository.findById(id)
+    public ShipmentResponse adminUpdateShipment(UUID id, Map<String, Object> fields, String adminEmail) {
+        Shipment shipment = shipmentRepository.findByIdWithUser(id)
                 .orElseThrow(() -> new IllegalArgumentException("Shipment not found"));
 
         if (fields.containsKey("trackingId")) shipment.setTrackingId((String) fields.get("trackingId"));
@@ -82,13 +84,13 @@ public class ShipmentService {
         if (fields.containsKey("orderQuantity")) shipment.setOrderQuantity(fields.get("orderQuantity") instanceof Number ? ((Number) fields.get("orderQuantity")).intValue() : null);
         if (fields.containsKey("paySupplier")) shipment.setPaySupplier((String) fields.get("paySupplier"));
 
-        return shipmentRepository.save(shipment);
+        return ShipmentResponse.fromEntityWithUser(shipmentRepository.save(shipment));
     }
 
     // Admin manually advances a shipment to a new stage
     @Transactional
-    public Shipment advanceStage(UUID shipmentId, String stageName, String note, String adminEmail) {
-        Shipment shipment = shipmentRepository.findById(shipmentId)
+    public ShipmentResponse advanceStage(UUID shipmentId, String stageName, String note, String adminEmail) {
+        Shipment shipment = shipmentRepository.findByIdWithUser(shipmentId)
                 .orElseThrow(() -> new IllegalArgumentException("Shipment not found"));
 
         ShipmentStatus prevStatus = shipment.getStatus();
@@ -108,7 +110,7 @@ public class ShipmentService {
 
         log.info("Shipment stage advanced: {} {} -> {} by {} | correlationId={}",
                 shipment.getTrackingId(), prevStatus, stageName, adminEmail, LoggingFilter.correlationId());
-        return shipment;
+        return ShipmentResponse.fromEntityWithUser(shipment);
     }
 
     public List<ShipmentStage> getStageHistory(UUID shipmentId) {
@@ -118,7 +120,7 @@ public class ShipmentService {
     }
 
     @Transactional
-    public Shipment createShipment(ShipmentRequest request, String userEmail) {
+    public ShipmentResponse createShipment(ShipmentRequest request, String userEmail) {
         AppUser user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + userEmail));
 
@@ -143,11 +145,11 @@ public class ShipmentService {
         shipment = shipmentRepository.save(shipment);
         log.info("Shipment created: trackingId={} | user={} | correlationId={}",
                 shipment.getTrackingId(), userEmail, LoggingFilter.correlationId());
-        return shipment;
+        return ShipmentResponse.fromEntity(shipment);
     }
 
     @Transactional
-    public Shipment createOrder(OrderRequest request, String userEmail) {
+    public ShipmentResponse createOrder(OrderRequest request, String userEmail) {
         AppUser user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + userEmail));
 
@@ -172,7 +174,7 @@ public class ShipmentService {
         shipment = shipmentRepository.save(shipment);
         log.info("Order created: trackingId={} | productId={} | user={} | correlationId={}",
                 trackingId, request.getProductId(), userEmail, LoggingFilter.correlationId());
-        return shipment;
+        return ShipmentResponse.fromEntity(shipment);
     }
 
     private String generateOrderTrackingId() {
@@ -184,22 +186,28 @@ public class ShipmentService {
         return trackingId;
     }
 
-    public List<Shipment> getActiveShipments(String userEmail) {
+    public List<ShipmentResponse> getActiveShipments(String userEmail) {
         AppUser user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + userEmail));
-        return shipmentRepository.findByUserAndArchivedFalse(user);
+        return shipmentRepository.findByUserAndArchivedFalse(user).stream()
+                .map(ShipmentResponse::fromEntity)
+                .toList();
     }
 
-    public Shipment getShipmentById(UUID id, String userEmail) {
+    public ShipmentResponse getShipmentById(UUID id, String userEmail) {
         AppUser user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return shipmentRepository.findByIdAndUser(id, user)
+                .map(ShipmentResponse::fromEntity)
                 .orElseThrow(() -> new IllegalArgumentException("Shipment not found or unauthorized."));
     }
 
     @Transactional
-    public Shipment updateShipment(UUID id, ShipmentRequest request, String userEmail) {
-        Shipment shipment = getShipmentById(id, userEmail);
+    public ShipmentResponse updateShipment(UUID id, ShipmentRequest request, String userEmail) {
+        AppUser user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        Shipment shipment = shipmentRepository.findByIdAndUser(id, user)
+                .orElseThrow(() -> new IllegalArgumentException("Shipment not found or unauthorized."));
         shipment.setTrackingId(request.getTrackingId());
         shipment.setDescription(request.getDescription());
         shipment.setGoodsType(request.getGoodsType());
@@ -208,12 +216,15 @@ public class ShipmentService {
         shipment.setDestinationPort(request.getDestinationPort());
         shipment.setWeightKg(request.getWeightKg());
         shipment.setEstimatedTimeOfArrival(request.getEstimatedTimeOfArrival());
-        return shipmentRepository.save(shipment);
+        return ShipmentResponse.fromEntity(shipmentRepository.save(shipment));
     }
 
     @Transactional
     public void archiveShipment(UUID id, String userEmail) {
-        Shipment shipment = getShipmentById(id, userEmail);
+        AppUser user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        Shipment shipment = shipmentRepository.findByIdAndUser(id, user)
+                .orElseThrow(() -> new IllegalArgumentException("Shipment not found or unauthorized."));
         shipment.setArchived(true);
         shipment.setStatus(ShipmentStatus.ARCHIVED);
         shipmentRepository.save(shipment);

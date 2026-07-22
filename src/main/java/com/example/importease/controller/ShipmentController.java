@@ -2,7 +2,7 @@ package com.example.importease.controller;
 
 import com.example.importease.dto.OrderRequest;
 import com.example.importease.dto.ShipmentRequest;
-import com.example.importease.model.Shipment;
+import com.example.importease.dto.ShipmentResponse;
 import com.example.importease.service.ShipmentService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -25,23 +25,21 @@ public class ShipmentController {
     }
 
     @PostMapping
-    public ResponseEntity<Shipment> createShipment(
+    public ResponseEntity<ShipmentResponse> createShipment(
             @Valid @RequestBody ShipmentRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        Shipment shipment = shipmentService.createShipment(request, userDetails.getUsername());
-        return ResponseEntity.ok(shipment);
+        return ResponseEntity.ok(shipmentService.createShipment(request, userDetails.getUsername()));
     }
 
     @PostMapping("/order")
-    public ResponseEntity<Shipment> createOrder(
+    public ResponseEntity<ShipmentResponse> createOrder(
             @Valid @RequestBody OrderRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        Shipment shipment = shipmentService.createOrder(request, userDetails.getUsername());
-        return ResponseEntity.ok(shipment);
+        return ResponseEntity.ok(shipmentService.createOrder(request, userDetails.getUsername()));
     }
 
     @GetMapping
-    public ResponseEntity<List<Shipment>> getMyShipments(
+    public ResponseEntity<List<ShipmentResponse>> getMyShipments(
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(shipmentService.getActiveShipments(userDetails.getUsername()));
     }
@@ -54,7 +52,7 @@ public class ShipmentController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Shipment> updateShipment(
+    public ResponseEntity<ShipmentResponse> updateShipment(
             @PathVariable UUID id,
             @Valid @RequestBody ShipmentRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
