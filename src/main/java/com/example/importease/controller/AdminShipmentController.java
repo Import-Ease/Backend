@@ -1,7 +1,7 @@
 package com.example.importease.controller;
 
 import com.example.importease.config.LoggingFilter;
-import com.example.importease.model.Shipment;
+import com.example.importease.dto.ShipmentResponse;
 import com.example.importease.model.ShipmentCheckpoint;
 import com.example.importease.model.ShipmentDocument;
 import com.example.importease.model.ShipmentEventLog;
@@ -55,7 +55,7 @@ public class AdminShipmentController {
 
     // GET /api/admin/shipments/{id} - get full shipment details
     @GetMapping("/{id}")
-    public ResponseEntity<Shipment> getShipmentDetail(@PathVariable UUID id) {
+    public ResponseEntity<ShipmentResponse> getShipmentDetail(@PathVariable UUID id) {
         return shipmentService.getShipmentByIdAdmin(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -63,7 +63,7 @@ public class AdminShipmentController {
 
     // PUT /api/admin/shipments/{id} - update shipment fields (admin)
     @PutMapping("/{id}")
-    public ResponseEntity<Shipment> updateShipment(
+    public ResponseEntity<ShipmentResponse> updateShipment(
             @PathVariable UUID id,
             @RequestBody Map<String, Object> body,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -74,7 +74,7 @@ public class AdminShipmentController {
 
     // POST /api/admin/shipments/{id}/advance-stage
     @PostMapping("/{id}/advance-stage")
-    public ResponseEntity<Shipment> advanceStage(
+    public ResponseEntity<ShipmentResponse> advanceStage(
             @PathVariable UUID id,
             @RequestBody Map<String, String> body,
             @AuthenticationPrincipal UserDetails userDetails) {

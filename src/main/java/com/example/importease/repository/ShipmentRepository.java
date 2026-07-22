@@ -4,6 +4,7 @@ import com.example.importease.model.Shipment;
 import com.example.importease.model.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -23,4 +24,7 @@ public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
 
     @Query("SELECT s FROM Shipment s JOIN FETCH s.user")
     List<Shipment> findAllWithUser();
+
+    @Query("SELECT s FROM Shipment s JOIN FETCH s.user WHERE s.id = :id")
+    Optional<Shipment> findByIdWithUser(@Param("id") UUID id);
 }
