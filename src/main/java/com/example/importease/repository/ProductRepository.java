@@ -11,6 +11,10 @@ import java.util.List;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
+    List<Product> findBySupplierId(Long supplierId);
+
+    long countBySupplierId(Long supplierId);
+
     @Query(value = "SELECT p.id, p.name, p.price, " +
             "s.name, s.phone, s.shipping_origin, p.image_url " +
             "FROM products p " +

@@ -6,6 +6,7 @@ import com.example.importease.model.Supplier;
 import com.example.importease.repository.AppUserRepository;
 import com.example.importease.repository.ProductRepository;
 import com.example.importease.repository.SupplierRepository;
+import com.example.importease.service.CloudinaryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,9 @@ public class ProductController {
 
     @Autowired
     private AppUserRepository appUserRepository;
+
+    @Autowired
+    private CloudinaryService cloudinaryService;
 
     // Helper: get the current logged-in user's supplier profile
     private Supplier getCurrentUserSupplier(UserDetails userDetails) {
@@ -64,9 +68,7 @@ public class ProductController {
                     .body(Map.of("error", "No supplier profile found. Please create one first."));
         }
 
-        List<Product> myProducts = productRepository.findAll().stream()
-                .filter(p -> p.getSupplier() != null && p.getSupplier().getId().equals(supplier.getId()))
-                .toList();
+        List<Product> myProducts = productRepository.findBySupplierId(supplier.getId());
 
         return ResponseEntity.ok(myProducts);
     }
@@ -85,9 +87,7 @@ public class ProductController {
         }
 
         if ("FREE".equals(supplier.getSubscriptionTier())) {
-            long existingCount = productRepository.findAll().stream()
-                    .filter(p -> p.getSupplier() != null && p.getSupplier().getId().equals(supplier.getId()))
-                    .count();
+            long existingCount = productRepository.countBySupplierId(supplier.getId());
             if (existingCount >= 5) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("error", "Free tier limited to 5 products. Upgrade to add more."));
@@ -155,6 +155,11 @@ public class ProductController {
         if (!isOwner && !isAdmin) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("error", "You can only delete your own products."));
+        }
+
+        String publicId = cloudinaryService.extractPublicId(product.getImageUrl());
+        if (publicId != null) {
+            cloudinaryService.deleteImage(publicId);
         }
 
         productRepository.deleteById(id);

@@ -57,6 +57,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .orElse(null);
 
             if (appUser != null) {
+                if (!appUser.isEnabled()) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 String jwtSubject = appUser.getEmail() != null ? appUser.getEmail() : appUser.getUsername();
                 if (jwtService.isTokenValid(jwt, org.springframework.security.core.userdetails.User
                         .withUsername(jwtSubject)

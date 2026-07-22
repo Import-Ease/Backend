@@ -1,7 +1,6 @@
 package com.example.importease.model.dto;
 
 import java.util.List;
-import java.util.Map;
 
 public class BrevoEmailRequest {
     private Sender sender;
@@ -9,48 +8,32 @@ public class BrevoEmailRequest {
     private String subject;
     private String htmlContent;
     private String textContent;
-    private Map<String, Object> params;
 
-    public BrevoEmailRequest(Sender sender, List<Recipient> to, String subject, String htmlContent) {
-        this.sender = sender;
-        this.to = to;
+    public BrevoEmailRequest(String senderName, String senderEmail, String recipientEmail, String subject, String htmlContent, String textContent) {
+        this.sender = new Sender(senderName, senderEmail);
+        this.to = List.of(new Recipient(recipientEmail));
         this.subject = subject;
         this.htmlContent = htmlContent;
+        this.textContent = textContent;
     }
 
-    // Getters and Setters
     public Sender getSender() { return sender; }
     public List<Recipient> getTo() { return to; }
     public String getSubject() { return subject; }
     public String getHtmlContent() { return htmlContent; }
     public String getTextContent() { return textContent; }
-    public void setTextContent(String textContent) { this.textContent = textContent; }
-    public Map<String, Object> getParams() { return params; }
-    public void setParams(Map<String, Object> params) { this.params = params; }
 
-    // Nested Helper Class for Sender object
-    public static class Sender {
+    static class Sender {
         private String name;
         private String email;
-
-        public Sender(String name, String email) {
-            this.name = name;
-            this.email = email;
-        }
+        Sender(String name, String email) { this.name = name; this.email = email; }
         public String getName() { return name; }
         public String getEmail() { return email; }
     }
 
-    // Nested Helper Class for Recipient array object
-    public static class Recipient {
+    static class Recipient {
         private String email;
-        private String name;
-
-        public Recipient(String email, String name) {
-            this.email = email;
-            this.name = name;
-        }
+        Recipient(String email) { this.email = email; }
         public String getEmail() { return email; }
-        public String getName() { return name; }
     }
 }

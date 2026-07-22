@@ -1,10 +1,13 @@
 package com.example.importease.controller;
 
+import com.example.importease.config.LoggingFilter;
 import com.example.importease.model.AppUser;
 import com.example.importease.repository.AppUserRepository;
 import com.example.importease.service.JwtService;
 import com.example.importease.model.dto.LoginRequest;
 import com.example.importease.dto.RegisterRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -25,6 +28,8 @@ import java.util.Optional;
 @Tag(name = "Authentication", description = "Authentication endpoints")
 public class AuthController {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+
     private final JwtService jwtService;
     private final AppUserRepository appUserRepository;
 
@@ -40,11 +45,13 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         if (appUserRepository.findByUsername(request.getUsername()).isPresent()) {
+            log.warn("Registration failed: username taken {} | correlationId={}", request.getUsername(), LoggingFilter.correlationId());
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("error", "Username already taken."));
         }
 
         if (request.getEmail() != null && appUserRepository.findByEmail(request.getEmail()).isPresent()) {
+            log.warn("Registration failed: email taken {} | correlationId={}", request.getEmail(), LoggingFilter.correlationId());
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("error", "Email already registered."));
         }
@@ -66,6 +73,9 @@ public class AuthController {
 
         String token = jwtService.generateToken(userDetails);
 
+        log.info("User registered: username={} | email={} | role={} | correlationId={}",
+                user.getUsername(), user.getEmail(), user.getRole(), LoggingFilter.correlationId());
+
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "message", "Registration successful!",
                 "accessToken", token,
@@ -83,6 +93,7 @@ public class AuthController {
         Optional<AppUser> userOpt = appUserRepository.findByUsernameOrEmail(identifier);
 
         if (userOpt.isEmpty() || !userOpt.get().isPasswordSet()) {
+            log.warn("Login failed: unknown user {} | correlationId={}", identifier, LoggingFilter.correlationId());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Invalid username or password."));
         }
@@ -90,6 +101,7 @@ public class AuthController {
         AppUser user = userOpt.get();
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            log.warn("Login failed: wrong password for {} | correlationId={}", identifier, LoggingFilter.correlationId());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Invalid username or password."));
         }
@@ -101,6 +113,9 @@ public class AuthController {
                 .build();
 
         String token = jwtService.generateToken(userDetails);
+
+        log.info("User logged in: username={} | role={} | correlationId={}",
+                user.getUsername(), user.getRole(), LoggingFilter.correlationId());
 
         return ResponseEntity.ok(Map.of(
                 "message", "Login successful!",

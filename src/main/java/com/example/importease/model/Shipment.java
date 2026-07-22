@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.List;
+import com.example.importease.model.ShipmentStatus;
 
 @Entity
 @Table(name = "shipments")
@@ -40,7 +41,8 @@ public class Shipment {
     private LocalDate estimatedTimeOfArrival;
 
     @Column(name = "status")
-    private String status = "PENDING";
+    @Enumerated(EnumType.STRING)
+    private ShipmentStatus status = ShipmentStatus.PENDING;
 
     @Column(name = "archived")
     private boolean archived = false;
@@ -54,6 +56,9 @@ public class Shipment {
     @Column(name = "order_quantity")
     private Integer orderQuantity;
 
+    @Column(name = "pay_supplier")
+    private String paySupplier;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private AppUser user;
@@ -62,10 +67,29 @@ public class Shipment {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties("shipment")
     private List<ShipmentStage> stages = new java.util.ArrayList<>();
+
+    @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties("shipment")
+    private List<ShipmentDocument> documents = new java.util.ArrayList<>();
+
+    @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties("shipment")
+    private List<ShipmentCheckpoint> checkpoints = new java.util.ArrayList<>();
+
+    @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties("shipment")
+    private List<ShipmentEventLog> eventLogs = new java.util.ArrayList<>();
 
     public List<ShipmentStage> getStages() { return stages; }
     public void setStages(List<ShipmentStage> stages) { this.stages = stages; }
+    public List<ShipmentDocument> getDocuments() { return documents; }
+    public void setDocuments(List<ShipmentDocument> documents) { this.documents = documents; }
+    public List<ShipmentCheckpoint> getCheckpoints() { return checkpoints; }
+    public void setCheckpoints(List<ShipmentCheckpoint> checkpoints) { this.checkpoints = checkpoints; }
+    public List<ShipmentEventLog> getEventLogs() { return eventLogs; }
+    public void setEventLogs(List<ShipmentEventLog> eventLogs) { this.eventLogs = eventLogs; }
 
     public Shipment() {}
 
@@ -81,7 +105,7 @@ public class Shipment {
         this.weightKg = weightKg;
         this.estimatedTimeOfArrival = estimatedTimeOfArrival;
         this.user = user;
-        this.status = "PENDING";
+        this.status = ShipmentStatus.PENDING;
         this.archived = false;
         this.createdAt = LocalDateTime.now();
     }
@@ -104,8 +128,8 @@ public class Shipment {
     public void setWeightKg(Double weightKg) { this.weightKg = weightKg; }
     public LocalDate getEstimatedTimeOfArrival() { return estimatedTimeOfArrival; }
     public void setEstimatedTimeOfArrival(LocalDate eta) { this.estimatedTimeOfArrival = eta; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public ShipmentStatus getStatus() { return status; }
+    public void setStatus(ShipmentStatus status) { this.status = status; }
     public boolean isArchived() { return archived; }
     public void setArchived(boolean archived) { this.archived = archived; }
     public AppUser getUser() { return user; }
@@ -116,6 +140,8 @@ public class Shipment {
     public void setShippingMode(String shippingMode) { this.shippingMode = shippingMode; }
     public Integer getOrderQuantity() { return orderQuantity; }
     public void setOrderQuantity(Integer orderQuantity) { this.orderQuantity = orderQuantity; }
+    public String getPaySupplier() { return paySupplier; }
+    public void setPaySupplier(String paySupplier) { this.paySupplier = paySupplier; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

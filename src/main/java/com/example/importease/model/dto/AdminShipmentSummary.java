@@ -20,7 +20,7 @@ public class AdminShipmentSummary {
         this.id = s.getId();
         this.trackingId = s.getTrackingId();
         this.description = s.getDescription();
-        this.status = s.getStatus();
+        this.status = s.getStatus().name();
         this.carrier = s.getCarrier();
         this.originPort = s.getOriginPort();
         this.destinationPort = s.getDestinationPort();
