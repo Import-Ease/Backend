@@ -41,8 +41,8 @@ public final class ShipmentWorkflow {
         TRANSITIONS.put(ShipmentStatus.OUT_FOR_DELIVERY, Set.of(ShipmentStatus.DELIVERED));
         TRANSITIONS.put(ShipmentStatus.DELIVERED, Set.of());
 
-        mapLegacyStatus(ShipmentStatus.PENDING, ShipmentStatus.ORDER_CREATED);
-        mapLegacyStatus(ShipmentStatus.PENDING_PAYMENT, ShipmentStatus.ORDER_CREATED);
+        TRANSITIONS.put(ShipmentStatus.PENDING, Set.of(ShipmentStatus.ORDER_CREATED));
+        TRANSITIONS.put(ShipmentStatus.PENDING_PAYMENT, Set.of(ShipmentStatus.ORDER_CREATED));
         mapLegacyStatus(ShipmentStatus.ORIGIN, ShipmentStatus.ORIGIN_WAREHOUSE);
         mapLegacyStatus(ShipmentStatus.TRANSIT, ShipmentStatus.IN_TRANSIT);
         mapLegacyStatus(ShipmentStatus.AT_PORT, ShipmentStatus.DESTINATION_PORT);

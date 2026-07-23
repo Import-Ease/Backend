@@ -1,6 +1,8 @@
 package com.example.importease.dto;
 
 import com.example.importease.model.Shipment;
+import com.example.importease.model.ShipmentPaymentStatus;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -24,6 +26,10 @@ public class ShipmentResponse {
     private boolean archived;
     private String userEmail;
     private String userFullName;
+    private BigDecimal quotationAmount;
+    private String quotationCurrency;
+    private ShipmentPaymentStatus paymentStatus;
+    private BigDecimal amountPaid;
 
     public static ShipmentResponse fromEntity(Shipment s) {
         ShipmentResponse r = new ShipmentResponse();
@@ -41,6 +47,10 @@ public class ShipmentResponse {
         r.shippingMode = s.getShippingMode();
         r.orderQuantity = s.getOrderQuantity();
         r.paySupplier = s.getPaySupplier();
+        r.quotationAmount = s.getQuotationAmount();
+        r.quotationCurrency = s.getQuotationCurrency();
+        r.paymentStatus = s.getPaymentStatus();
+        r.amountPaid = s.getAmountPaid();
         r.createdAt = s.getCreatedAt();
         r.archived = s.isArchived();
         return r;
@@ -73,4 +83,8 @@ public class ShipmentResponse {
     public boolean isArchived() { return archived; }
     public String getUserEmail() { return userEmail; }
     public String getUserFullName() { return userFullName; }
+    public BigDecimal getQuotationAmount() { return quotationAmount; }
+    public String getQuotationCurrency() { return quotationCurrency; }
+    public ShipmentPaymentStatus getPaymentStatus() { return paymentStatus; }
+    public BigDecimal getAmountPaid() { return amountPaid; }
 }

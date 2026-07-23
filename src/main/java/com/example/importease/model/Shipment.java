@@ -1,6 +1,7 @@
 package com.example.importease.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -58,6 +59,19 @@ public class Shipment {
 
     @Column(name = "pay_supplier")
     private String paySupplier;
+
+    @Column(name = "quotation_amount", precision = 12, scale = 2)
+    private BigDecimal quotationAmount;
+
+    @Column(name = "quotation_currency")
+    private String quotationCurrency = "GHS";
+
+    @Column(name = "payment_status")
+    @Enumerated(EnumType.STRING)
+    private ShipmentPaymentStatus paymentStatus = ShipmentPaymentStatus.PENDING;
+
+    @Column(name = "amount_paid", precision = 12, scale = 2)
+    private BigDecimal amountPaid = BigDecimal.ZERO;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -142,6 +156,14 @@ public class Shipment {
     public void setOrderQuantity(Integer orderQuantity) { this.orderQuantity = orderQuantity; }
     public String getPaySupplier() { return paySupplier; }
     public void setPaySupplier(String paySupplier) { this.paySupplier = paySupplier; }
+    public BigDecimal getQuotationAmount() { return quotationAmount; }
+    public void setQuotationAmount(BigDecimal quotationAmount) { this.quotationAmount = quotationAmount; }
+    public String getQuotationCurrency() { return quotationCurrency; }
+    public void setQuotationCurrency(String quotationCurrency) { this.quotationCurrency = quotationCurrency; }
+    public ShipmentPaymentStatus getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(ShipmentPaymentStatus paymentStatus) { this.paymentStatus = paymentStatus; }
+    public BigDecimal getAmountPaid() { return amountPaid; }
+    public void setAmountPaid(BigDecimal amountPaid) { this.amountPaid = amountPaid; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
