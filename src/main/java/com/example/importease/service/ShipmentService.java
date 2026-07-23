@@ -5,8 +5,10 @@ import com.example.importease.dto.OrderRequest;
 import com.example.importease.dto.ShipmentRequest;
 import com.example.importease.model.AppUser;
 import com.example.importease.model.Shipment;
+import com.example.importease.model.ShipmentPaymentStatus;
 import com.example.importease.repository.AppUserRepository;
 import com.example.importease.repository.ShipmentRepository;
+import java.math.BigDecimal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -83,6 +85,17 @@ public class ShipmentService {
         if (fields.containsKey("shippingMode")) shipment.setShippingMode((String) fields.get("shippingMode"));
         if (fields.containsKey("orderQuantity")) shipment.setOrderQuantity(fields.get("orderQuantity") instanceof Number ? ((Number) fields.get("orderQuantity")).intValue() : null);
         if (fields.containsKey("paySupplier")) shipment.setPaySupplier((String) fields.get("paySupplier"));
+        if (fields.containsKey("quotationAmount")) {
+            Object val = fields.get("quotationAmount");
+            shipment.setQuotationAmount(val instanceof Number ? BigDecimal.valueOf(((Number) val).doubleValue()) : null);
+        }
+        if (fields.containsKey("quotationCurrency")) shipment.setQuotationCurrency((String) fields.get("quotationCurrency"));
+        if (fields.containsKey("amountPaid") && fields.get("amountPaid") instanceof Number) {
+            shipment.setAmountPaid(BigDecimal.valueOf(((Number) fields.get("amountPaid")).doubleValue()));
+        }
+        if (fields.containsKey("paymentStatus") && fields.get("paymentStatus") instanceof String) {
+            shipment.setPaymentStatus(ShipmentPaymentStatus.valueOf((String) fields.get("paymentStatus")));
+        }
 
         return ShipmentResponse.fromEntityWithUser(shipmentRepository.save(shipment));
     }
