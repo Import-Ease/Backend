@@ -1,0 +1,169 @@
+package com.example.importease.model;
+
+import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
+import java.util.List;
+import com.example.importease.model.ShipmentStatus;
+
+@Entity
+@Table(name = "shipments")
+public class Shipment {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "shipment_id")
+    private UUID id;
+
+    @Column(name = "tracking_number", nullable = false, unique = true)
+    private String trackingId;
+
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "goods_type")
+    private String goodsType;
+
+    @Column(name = "carrier")
+    private String carrier;
+
+    @Column(name = "origin_port")
+    private String originPort;
+
+    @Column(name = "destination_port")
+    private String destinationPort;
+
+    @Column(name = "weight_kg")
+    private Double weightKg;
+
+    @Column(name = "estimated_arrival")
+    private LocalDate estimatedTimeOfArrival;
+
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    private ShipmentStatus status = ShipmentStatus.PENDING;
+
+    @Column(name = "archived")
+    private boolean archived = false;
+
+    @Column(name = "product_id")
+    private Long productId;
+
+    @Column(name = "shipping_mode")
+    private String shippingMode;
+
+    @Column(name = "order_quantity")
+    private Integer orderQuantity;
+
+    @Column(name = "pay_supplier")
+    private String paySupplier;
+
+    @Column(name = "quotation_amount", precision = 12, scale = 2)
+    private BigDecimal quotationAmount;
+
+    @Column(name = "quotation_currency")
+    private String quotationCurrency = "GHS";
+
+    @Column(name = "payment_status")
+    @Enumerated(EnumType.STRING)
+    private ShipmentPaymentStatus paymentStatus = ShipmentPaymentStatus.PENDING;
+
+    @Column(name = "amount_paid", precision = 12, scale = 2)
+    private BigDecimal amountPaid = BigDecimal.ZERO;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private AppUser user;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties("shipment")
+    private List<ShipmentStage> stages = new java.util.ArrayList<>();
+
+    @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties("shipment")
+    private List<ShipmentDocument> documents = new java.util.ArrayList<>();
+
+    @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties("shipment")
+    private List<ShipmentCheckpoint> checkpoints = new java.util.ArrayList<>();
+
+    @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties("shipment")
+    private List<ShipmentEventLog> eventLogs = new java.util.ArrayList<>();
+
+    public List<ShipmentStage> getStages() { return stages; }
+    public void setStages(List<ShipmentStage> stages) { this.stages = stages; }
+    public List<ShipmentDocument> getDocuments() { return documents; }
+    public void setDocuments(List<ShipmentDocument> documents) { this.documents = documents; }
+    public List<ShipmentCheckpoint> getCheckpoints() { return checkpoints; }
+    public void setCheckpoints(List<ShipmentCheckpoint> checkpoints) { this.checkpoints = checkpoints; }
+    public List<ShipmentEventLog> getEventLogs() { return eventLogs; }
+    public void setEventLogs(List<ShipmentEventLog> eventLogs) { this.eventLogs = eventLogs; }
+
+    public Shipment() {}
+
+    public Shipment(String trackingId, String description, String goodsType,
+                    String carrier, String originPort, String destinationPort,
+                    Double weightKg, LocalDate estimatedTimeOfArrival, AppUser user) {
+        this.trackingId = trackingId;
+        this.description = description;
+        this.goodsType = goodsType;
+        this.carrier = carrier;
+        this.originPort = originPort;
+        this.destinationPort = destinationPort;
+        this.weightKg = weightKg;
+        this.estimatedTimeOfArrival = estimatedTimeOfArrival;
+        this.user = user;
+        this.status = ShipmentStatus.PENDING;
+        this.archived = false;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+    public String getTrackingId() { return trackingId; }
+    public void setTrackingId(String trackingId) { this.trackingId = trackingId; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public String getGoodsType() { return goodsType; }
+    public void setGoodsType(String goodsType) { this.goodsType = goodsType; }
+    public String getCarrier() { return carrier; }
+    public void setCarrier(String carrier) { this.carrier = carrier; }
+    public String getOriginPort() { return originPort; }
+    public void setOriginPort(String originPort) { this.originPort = originPort; }
+    public String getDestinationPort() { return destinationPort; }
+    public void setDestinationPort(String destinationPort) { this.destinationPort = destinationPort; }
+    public Double getWeightKg() { return weightKg; }
+    public void setWeightKg(Double weightKg) { this.weightKg = weightKg; }
+    public LocalDate getEstimatedTimeOfArrival() { return estimatedTimeOfArrival; }
+    public void setEstimatedTimeOfArrival(LocalDate eta) { this.estimatedTimeOfArrival = eta; }
+    public ShipmentStatus getStatus() { return status; }
+    public void setStatus(ShipmentStatus status) { this.status = status; }
+    public boolean isArchived() { return archived; }
+    public void setArchived(boolean archived) { this.archived = archived; }
+    public AppUser getUser() { return user; }
+    public void setUser(AppUser user) { this.user = user; }
+    public Long getProductId() { return productId; }
+    public void setProductId(Long productId) { this.productId = productId; }
+    public String getShippingMode() { return shippingMode; }
+    public void setShippingMode(String shippingMode) { this.shippingMode = shippingMode; }
+    public Integer getOrderQuantity() { return orderQuantity; }
+    public void setOrderQuantity(Integer orderQuantity) { this.orderQuantity = orderQuantity; }
+    public String getPaySupplier() { return paySupplier; }
+    public void setPaySupplier(String paySupplier) { this.paySupplier = paySupplier; }
+    public BigDecimal getQuotationAmount() { return quotationAmount; }
+    public void setQuotationAmount(BigDecimal quotationAmount) { this.quotationAmount = quotationAmount; }
+    public String getQuotationCurrency() { return quotationCurrency; }
+    public void setQuotationCurrency(String quotationCurrency) { this.quotationCurrency = quotationCurrency; }
+    public ShipmentPaymentStatus getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(ShipmentPaymentStatus paymentStatus) { this.paymentStatus = paymentStatus; }
+    public BigDecimal getAmountPaid() { return amountPaid; }
+    public void setAmountPaid(BigDecimal amountPaid) { this.amountPaid = amountPaid; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+}

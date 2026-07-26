@@ -1,12 +1,21 @@
 package com.example.importease.controller;
 
+import com.example.importease.model.AppUser;
 import com.example.importease.model.Product;
+import com.example.importease.model.Supplier;
+import com.example.importease.repository.AppUserRepository;
 import com.example.importease.repository.ProductRepository;
+import com.example.importease.repository.SupplierRepository;
+import com.example.importease.service.CloudinaryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -17,19 +26,30 @@ public class ProductController {
     @Autowired
     private ProductRepository productRepository;
 
-    // Add Product
-    @PostMapping
-    public Product addProduct(@RequestBody Product product) {
-        return productRepository.save(product);
+    @Autowired
+    private SupplierRepository supplierRepository;
+
+    @Autowired
+    private AppUserRepository appUserRepository;
+
+    @Autowired
+    private CloudinaryService cloudinaryService;
+
+    // Helper: get the current logged-in user's supplier profile
+    private Supplier getCurrentUserSupplier(UserDetails userDetails) {
+        AppUser currentUser = appUserRepository.findByEmail(userDetails.getUsername())
+                .orElse(null);
+        if (currentUser == null) return null;
+        return supplierRepository.findByOwnerId(currentUser.getId()).orElse(null);
     }
 
-    // View All Products
+    // View All Products (public, unchanged)
     @GetMapping
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
 
-    // View Product By ID
+    // View Product By ID (public, unchanged)
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable Long id) {
         Optional<Product> product = productRepository.findById(id);
@@ -38,31 +58,108 @@ public class ProductController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // Update Product
-    @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(
-            @PathVariable Long id,
-            @RequestBody Product updatedProduct) {
+    // GET only the logged-in supplier's own products
+    @GetMapping("/mine")
+    public ResponseEntity<?> getMyProducts(@AuthenticationPrincipal UserDetails userDetails) {
+        Supplier supplier = getCurrentUserSupplier(userDetails);
 
-        return productRepository.findById(id)
-                .map(product -> {
-                    product.setName(updatedProduct.getName());
-                    product.setDescription(updatedProduct.getDescription());
-                    product.setPrice(updatedProduct.getPrice());
-                    product.setQuantity(updatedProduct.getQuantity());
+        if (supplier == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No supplier profile found. Please create one first."));
+        }
 
-                    Product savedProduct = productRepository.save(product);
-                    return ResponseEntity.ok(savedProduct);
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        List<Product> myProducts = productRepository.findBySupplierId(supplier.getId());
+
+        return ResponseEntity.ok(myProducts);
     }
 
-    // Delete Product
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+    // Add Product - now requires login, auto-attaches to logged-in supplier
+    @PostMapping
+    public ResponseEntity<?> addProduct(
+            @RequestBody Product product,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        if (!productRepository.existsById(id)) {
+        Supplier supplier = getCurrentUserSupplier(userDetails);
+
+        if (supplier == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No supplier profile found. Please create one first via POST /api/suppliers/me."));
+        }
+
+        if ("FREE".equals(supplier.getSubscriptionTier())) {
+            long existingCount = productRepository.countBySupplierId(supplier.getId());
+            if (existingCount >= 5) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "Free tier limited to 5 products. Upgrade to add more."));
+            }
+        }
+
+        product.setSupplier(supplier);
+        Product saved = productRepository.save(product);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    // Update Product - only the owning supplier (or admin) can update
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateProduct(
+            @PathVariable Long id,
+            @RequestBody Product updatedProduct,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Optional<Product> productOpt = productRepository.findById(id);
+        if (productOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
+        }
+
+        Product product = productOpt.get();
+        Supplier supplier = getCurrentUserSupplier(userDetails);
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
+
+        boolean isOwner = supplier != null && product.getSupplier() != null
+                && product.getSupplier().getId().equals(supplier.getId());
+
+        if (!isOwner && !isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "You can only edit your own products."));
+        }
+
+        product.setName(updatedProduct.getName());
+        product.setDescription(updatedProduct.getDescription());
+        product.setPrice(updatedProduct.getPrice());
+        product.setQuantity(updatedProduct.getQuantity());
+        product.setImageUrl(updatedProduct.getImageUrl());
+
+        return ResponseEntity.ok(productRepository.save(product));
+    }
+
+    // Delete Product - only the owning supplier (or admin) can delete
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteProduct(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Optional<Product> productOpt = productRepository.findById(id);
+        if (productOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Product product = productOpt.get();
+        Supplier supplier = getCurrentUserSupplier(userDetails);
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
+
+        boolean isOwner = supplier != null && product.getSupplier() != null
+                && product.getSupplier().getId().equals(supplier.getId());
+
+        if (!isOwner && !isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "You can only delete your own products."));
+        }
+
+        String publicId = cloudinaryService.extractPublicId(product.getImageUrl());
+        if (publicId != null) {
+            cloudinaryService.deleteImage(publicId);
         }
 
         productRepository.deleteById(id);
