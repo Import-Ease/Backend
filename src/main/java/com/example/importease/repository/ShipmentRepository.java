@@ -27,4 +27,7 @@ public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
 
     @Query("SELECT s FROM Shipment s JOIN FETCH s.user WHERE s.id = :id")
     Optional<Shipment> findByIdWithUser(@Param("id") UUID id);
+
+    @Query("SELECT s FROM Shipment s JOIN FETCH s.user WHERE s.productId IN :productIds")
+    List<Shipment> findByProductIdInWithUser(@Param("productIds") List<Long> productIds);
 }

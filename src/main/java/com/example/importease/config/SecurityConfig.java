@@ -49,6 +49,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/products/**").authenticated()
 
                         // Suppliers: reads public, writes require login
+                        // Suppliers: order data is private — must be declared before the general permitAll GET rule below
+                        .requestMatchers(HttpMethod.GET, "/api/suppliers/me/orders", "/api/suppliers/me/orders/summary").authenticated()
+
+                        // Suppliers: reads public, writes require login
                         .requestMatchers(HttpMethod.GET, "/api/suppliers/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/suppliers/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/suppliers/**").authenticated()

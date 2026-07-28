@@ -1,9 +1,14 @@
 package com.example.importease.controller;
 
+import com.example.importease.dto.ShipmentResponse;
 import com.example.importease.model.AppUser;
+import com.example.importease.model.Product;
+import com.example.importease.model.Shipment;
 import com.example.importease.model.Supplier;
+import com.example.importease.model.dto.SupplierOrderSummary;
 import com.example.importease.repository.AppUserRepository;
 import com.example.importease.repository.ProductRepository;
+import com.example.importease.repository.ShipmentRepository;
 import com.example.importease.repository.SupplierRepository;
 import com.example.importease.service.PaystackService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +22,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 @RestController
 @RequestMapping("/api/suppliers")
 @CrossOrigin(origins = "*")
@@ -34,6 +38,9 @@ public class SupplierController {
 
     @Autowired
     private PaystackService paystackService;
+
+    @Autowired
+    private ShipmentRepository shipmentRepository;
 
     // GET all suppliers
     @GetMapping
@@ -152,6 +159,71 @@ public class SupplierController {
                 "subscriptionTier", supplier.getSubscriptionTier(),
                 "paidUntil", supplier.getPaidUntil() != null ? supplier.getPaidUntil().toString() : null
         ));
+    }
+
+    // GET all orders (shipments) placed against the logged-in supplier's products
+    @GetMapping("/me/orders")
+    public ResponseEntity<?> getMyOrders(@AuthenticationPrincipal UserDetails userDetails) {
+        AppUser currentUser = appUserRepository.findByEmail(userDetails.getUsername())
+                .orElse(null);
+
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "User not found."));
+        }
+
+        Optional<Supplier> supplierOpt = supplierRepository.findByOwnerId(currentUser.getId());
+
+        if (supplierOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No supplier profile found."));
+        }
+
+        List<Long> productIds = productRepository.findBySupplierId(supplierOpt.get().getId())
+                .stream()
+                .map(Product::getId)
+                .toList();
+
+        if (productIds.isEmpty()) {
+            return ResponseEntity.ok(List.of());
+        }
+
+        List<Shipment> shipments = shipmentRepository.findByProductIdInWithUser(productIds);
+        List<ShipmentResponse> response = shipments.stream()
+                .map(ShipmentResponse::fromEntityWithUser)
+                .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
+    // GET order stats (counts by status bucket) for the logged-in supplier's products
+    @GetMapping("/me/orders/summary")
+    public ResponseEntity<?> getMyOrdersSummary(@AuthenticationPrincipal UserDetails userDetails) {
+        AppUser currentUser = appUserRepository.findByEmail(userDetails.getUsername())
+                .orElse(null);
+
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "User not found."));
+        }
+
+        Optional<Supplier> supplierOpt = supplierRepository.findByOwnerId(currentUser.getId());
+
+        if (supplierOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No supplier profile found."));
+        }
+
+        List<Long> productIds = productRepository.findBySupplierId(supplierOpt.get().getId())
+                .stream()
+                .map(Product::getId)
+                .toList();
+
+        List<Shipment> shipments = productIds.isEmpty()
+                ? List.of()
+                : shipmentRepository.findByProductIdInWithUser(productIds);
+
+        return ResponseEntity.ok(SupplierOrderSummary.from(shipments));
     }
 
     // POST upgrade to PAID tier — initializes a $4 USD Paystack payment
