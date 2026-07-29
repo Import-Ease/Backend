@@ -22,6 +22,15 @@ public class Supplier {
 
     private String address;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "logo_url")
+    private String logoUrl;
+
+    private String category;
+
+    @Column(name = "shipping_origin")
     private String shippingOrigin;
 
     @Column(name = "owner_id")
@@ -37,7 +46,9 @@ public class Supplier {
     @Column(name = "paid_until")
     private LocalDateTime paidUntil;
 
-    // Constructors
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
     public Supplier() {}
 
     public Supplier(String name, String email, String phone, String address, String shippingOrigin) {
@@ -48,7 +59,6 @@ public class Supplier {
         this.shippingOrigin = shippingOrigin;
     }
 
-    // Getters and Setters
     public Long getId() { return id; }
 
     public String getName() { return name; }
@@ -62,6 +72,15 @@ public class Supplier {
 
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public String getLogoUrl() { return logoUrl; }
+    public void setLogoUrl(String logoUrl) { this.logoUrl = logoUrl; }
+
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
     public String getShippingOrigin() { return shippingOrigin; }
     public void setShippingOrigin(String shippingOrigin) { this.shippingOrigin = shippingOrigin; }
@@ -77,4 +96,7 @@ public class Supplier {
 
     public LocalDateTime getPaidUntil() { return paidUntil; }
     public void setPaidUntil(LocalDateTime paidUntil) { this.paidUntil = paidUntil; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

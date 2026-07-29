@@ -1,8 +1,11 @@
 package com.example.importease.service;
 
 import com.example.importease.model.PaymentTransaction;
+import com.example.importease.model.Shipment;
+import com.example.importease.model.ShipmentPaymentStatus;
 import com.example.importease.model.Supplier;
 import com.example.importease.repository.PaymentTransactionRepository;
+import com.example.importease.repository.ShipmentRepository;
 import com.example.importease.repository.SupplierRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -25,6 +28,7 @@ public class PaystackService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final SupplierRepository supplierRepository;
+    private final ShipmentRepository shipmentRepository;
 
     @Value("${paystack.secret.key:}")
     private String paystackSecretKey;
@@ -32,18 +36,29 @@ public class PaystackService {
     @Value("${paystack.base.url:https://api.paystack.co}")
     private String paystackBaseUrl;
 
+    @Value("${app.base.url:https://importease-backend.onrender.com}")
+    private String appBaseUrl;
+
     public PaystackService(PaymentTransactionRepository paymentTransactionRepository,
-                           SupplierRepository supplierRepository) {
+                           SupplierRepository supplierRepository,
+                           ShipmentRepository shipmentRepository) {
         this.paymentTransactionRepository = paymentTransactionRepository;
         this.supplierRepository = supplierRepository;
+        this.shipmentRepository = shipmentRepository;
     }
 
     public Map<String, Object> initializePayment(String payerEmail, String supplierName, BigDecimal amount, String currency) {
-        return initializePayment(payerEmail, supplierName, amount, currency, "STANDARD", null);
+        return initializePayment(payerEmail, supplierName, amount, currency, "STANDARD", null, null);
     }
 
     public Map<String, Object> initializePayment(String payerEmail, String supplierName, BigDecimal amount,
                                                   String currency, String paymentType, Long supplierId) {
+        return initializePayment(payerEmail, supplierName, amount, currency, paymentType, supplierId, null);
+    }
+
+    public Map<String, Object> initializePayment(String payerEmail, String supplierName, BigDecimal amount,
+                                                  String currency, String paymentType, Long supplierId,
+                                                  String shipmentId) {
         if (paystackSecretKey == null || paystackSecretKey.isBlank()) {
             throw new IllegalStateException("Paystack secret key is not configured");
         }
@@ -54,8 +69,10 @@ public class PaystackService {
         payload.put("amount", amount.multiply(new BigDecimal("100")).intValueExact());
         payload.put("currency", currency);
         payload.put("reference", reference);
+        payload.put("callback_url", appBaseUrl + "/api/payments/callback");
         payload.put("metadata", Map.of("supplierName", supplierName, "paymentType", paymentType,
-                "supplierId", supplierId != null ? supplierId : ""));
+                "supplierId", supplierId != null ? supplierId : "",
+                "shipmentId", shipmentId != null ? shipmentId : ""));
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -98,9 +115,10 @@ public class PaystackService {
             BigDecimal commission = transaction.getAmount().multiply(new BigDecimal("0.04"));
             transaction.setCommissionAmount(commission);
 
+            Map<String, Object> metadata = data.get("metadata") instanceof Map ? (Map<String, Object>) data.get("metadata") : Map.of();
+
             if ("SUBSCRIPTION".equals(transaction.getPaymentType())) {
                 try {
-                    Map<String, Object> metadata = data.get("metadata") instanceof Map ? (Map<String, Object>) data.get("metadata") : Map.of();
                     Object supplierIdObj = metadata.get("supplierId");
                     if (supplierIdObj != null && !String.valueOf(supplierIdObj).isEmpty()) {
                         Long supplierId = Long.valueOf(String.valueOf(supplierIdObj));
@@ -115,6 +133,22 @@ public class PaystackService {
                 } catch (Exception ex) {
                     System.err.println("Subscription upgrade failed: " + ex.getMessage());
                 }
+            }
+
+            try {
+                Object shipmentIdObj = metadata.get("shipmentId");
+                if (shipmentIdObj != null && !String.valueOf(shipmentIdObj).isEmpty()) {
+                    UUID shipmentId = UUID.fromString(String.valueOf(shipmentIdObj));
+                    Optional<Shipment> shipmentOpt = shipmentRepository.findById(shipmentId);
+                    if (shipmentOpt.isPresent()) {
+                        Shipment shipment = shipmentOpt.get();
+                        shipment.setPaymentStatus(ShipmentPaymentStatus.PAID);
+                        shipment.setAmountPaid(transaction.getAmount());
+                        shipmentRepository.save(shipment);
+                    }
+                }
+            } catch (Exception ex) {
+                System.err.println("Shipment payment update failed: " + ex.getMessage());
             }
         }
 
