@@ -20,6 +20,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +75,7 @@ public class SupplierController {
                 ? List.of()
                 : shipmentRepository.findByProductIdInWithUser(productIds);
         long ordersCompleted = shipments.stream()
+                .filter(s -> s.getStatus() != null)
                 .filter(s -> "DELIVERED".equals(s.getStatus().name()))
                 .count();
         long totalOrders = shipments.size();
@@ -281,6 +283,7 @@ public class SupplierController {
                             || "ORDER_CREATED".equals(s.getStatus().name())))
                 .count();
         long completedDeliveries = shipments.stream()
+                .filter(s -> s.getStatus() != null)
                 .filter(s -> "DELIVERED".equals(s.getStatus().name()))
                 .count();
         double revenue = shipments.stream()
@@ -296,7 +299,14 @@ public class SupplierController {
         stats.put("completedDeliveries", completedDeliveries);
         stats.put("revenue", revenue);
         stats.put("recentOrders", shipments.stream()
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .sorted((a, b) -> {
+                    LocalDateTime ca = a.getCreatedAt();
+                    LocalDateTime cb = b.getCreatedAt();
+                    if (ca == null && cb == null) return 0;
+                    if (ca == null) return 1;
+                    if (cb == null) return -1;
+                    return cb.compareTo(ca);
+                })
                 .limit(5)
                 .map(ShipmentResponse::fromEntityWithUser)
                 .toList());

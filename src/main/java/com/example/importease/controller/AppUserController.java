@@ -77,6 +77,44 @@ public class AppUserController {
     }
 
     /**
+     * PUT /api/users/change-password - Update the logged-in user's password.
+     * Requires the current password for confirmation.
+     */
+    @Operation(summary = "Change my password")
+    @PutMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> body, Principal principal) {
+        AppUser user = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        String current = body.get("currentPassword");
+        String newPassword = body.get("newPassword");
+        String confirm = body.get("confirmPassword");
+
+        if (current == null || newPassword == null || confirm == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "All fields are required."));
+        }
+        if (!newPassword.equals(confirm)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "New passwords do not match."));
+        }
+        if (newPassword.length() < 8) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "New password must be at least 8 characters."));
+        }
+        if (!passwordEncoder.matches(current, user.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Current password is incorrect."));
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPasswordSet(true);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("message", "Password updated successfully."));
+    }
+
+    /**
      * DELETE /api/users/me - Permanently delete the logged-in user's account
      * Requires password confirmation for safety.
      */
