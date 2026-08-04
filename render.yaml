@@ -13,11 +13,21 @@ services:
         sync: false
       - key: DB_PASSWORD
         sync: false
-      - key: BREVO_API_KEY
-        value: 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
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: SENDGRID_FROM_EMAIL
+        sync: false
+      - key: SENDGRID_FROM_NAME
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM_NUMBER
+        sync: false
       - key: PORT
         value: 8080
       - key: PAYSTACK_SECRET_KEY
         sync: false
       - key: CLOUDINARY_URL
-        value: cloudinary://625873576545436:e40-6UmsnPyCyj_9mVrM4skEmbc@z9a7vegw
+        sync: false
