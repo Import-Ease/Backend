@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ProductSerializationTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @Test
     void serializesProductWithSupplierWithoutStackOverflow() {

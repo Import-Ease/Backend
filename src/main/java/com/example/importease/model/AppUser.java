@@ -45,6 +45,9 @@ public class AppUser {
     @Column(name = "enabled")
     private boolean enabled = true;
 
+    @Column(name = "email_verified")
+    private Boolean emailVerified = false;
+
     // Getters and setters
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
@@ -52,6 +55,9 @@ public class AppUser {
     public void setPasswordSet(boolean passwordSet) { this.passwordSet = passwordSet; }
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
+
+    public Boolean getEmailVerified() { return emailVerified; }
+    public void setEmailVerified(Boolean emailVerified) { this.emailVerified = emailVerified; }
 
     public AppUser() {}
 

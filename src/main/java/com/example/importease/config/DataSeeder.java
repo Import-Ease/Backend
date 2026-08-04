@@ -37,6 +37,7 @@ public class DataSeeder implements CommandLineRunner {
             user.setRole(role);
             user.setFullName(fullName);
             user.setPasswordSet(true);
+            user.setEmailVerified(true);
             userRepository.save(user);
             log.info("Seeded {} user: {} / {}", role.toLowerCase(), email, password);
         } else {

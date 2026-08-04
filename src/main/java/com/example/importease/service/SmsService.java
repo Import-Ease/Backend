@@ -85,9 +85,9 @@ public class SmsService {
                 + "<h2>Welcome to ImportEase</h2>"
                 + "<p>Your security verification code is:</p>"
                 + "<h1 style='color: #4F46E5; letter-spacing: 2px;'>" + otpCode + "</h1>"
-                + "<p>This code is valid for 10 minutes. Please do not share it with anyone.</p>"
+                + "<p>This code is valid for 5 minutes. Please do not share it with anyone.</p>"
                 + "</body></html>";
-        String textContent = "Your ImportEase verification code is " + otpCode + ". This code is valid for 10 minutes.";
+        String textContent = "Your ImportEase verification code is " + otpCode + ". This code is valid for 5 minutes.";
 
         SendGridEmailRequest requestPayload = new SendGridEmailRequest(
                 emailSenderName, emailSenderEmail, recipientEmail,
